@@ -1,0 +1,11 @@
+.venv/
+raw/
+staging/
+logs/
+*.duckdb
+*.parquet
+.env
+
+# For ignoring dbt files
+target/
+dbt_packages/
