@@ -9,3 +9,6 @@ logs/
 # For ignoring dbt files
 target/
 dbt_packages/
+
+# Claude Code project notes (kept local)
+CLAUDE.md
