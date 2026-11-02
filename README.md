@@ -4,12 +4,13 @@ A personal analytics pipeline researching US housing trends, built entirely with
 
 ## Status
 
-Work in progress. The first source is working end to end: weekly 30-year mortgage rates from FRED are extracted from the API, loaded into DuckDB, and exported to Parquet.
+Work in progress. The first source is working end to end: 18 national housing series from FRED (mortgage rates by loan type, home prices, sales, construction, rents) are extracted from the API, loaded into DuckDB, and exported to Parquet.
+
+The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- Extend the FRED pipeline to more housing series (starts, permits, sales, prices)
-- Add the FHFA House Price Index as the first file-based source
+- Add Zillow home values, rents, and forecasts at national, state, and ZIP code level
 - Set up dbt staging models, tests, and documentation
 - Schedule daily refreshes with Windows Task Scheduler
 
@@ -35,7 +36,7 @@ FRED API ──> extract/extract_fred.py ──> raw/fred/<series>_<date>.json  
 ```
 
 - **Raw responses are saved untouched** with dated filenames, so any load can be rerun or audited against the original data.
-- **Loads are idempotent.** The load script deletes a series' rows before reinserting them, so rerunning it never creates duplicates and picks up any revisions FRED made to past values.
+- **Loads are idempotent.** The load script upserts with a parameterized `MERGE` on series and date: existing rows are updated, new rows are inserted, and nothing is duplicated on a rerun. This picks up revisions FRED makes to past values, and keeps history for series where FRED only publishes the most recent months.
 - **Missing values are handled explicitly.** FRED marks missing observations with `"."`, which the load converts to `NULL` with `TRY_CAST`.
 - **Errors stop the run.** HTTP errors and missing inputs end the script with an error, so later steps never run on bad data.
 
@@ -55,8 +56,7 @@ The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys
 
 | Source | Data | Access | Status |
 |---|---|---|---|
-| [FRED](https://fred.stlouisfed.org/) | 30-year fixed mortgage rate, weekly (`MORTGAGE30US`) | API, free key | Loaded |
-| FRED | 15-year mortgage rate, Case-Shiller index, housing starts, permits, new home sales and prices | API, free key | Planned |
+| [FRED](https://fred.stlouisfed.org/) | 18 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; Case-Shiller index; new and existing home sales; new home prices and supply; housing starts and permits; rent CPI; rental vacancy; homeownership rate | API, free key | Loaded |
 | [FHFA](https://www.fhfa.gov/data/hpi) | House Price Index (national to ZIP level) | File download | Planned |
 | [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI), rents (ZORI), inventory | CSV download | Planned |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/) | Market tracker, price drops, sales metrics | CSV download | Planned |
@@ -90,7 +90,7 @@ Requires Windows, Python 3, and a free [FRED API key](https://fred.stlouisfed.or
    python load/load_fred.py
    ```
 
-   The load script prints a row count and the five most recent observations when it finishes.
+   The load script prints the row count and date range for each series when it finishes.
 
 ## Attribution
 
