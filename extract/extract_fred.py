@@ -28,19 +28,46 @@ SERIES_IDS = [
     "OBMMIVA30YF",    # 30-year fixed VA
     "OBMMIUSDA30YF",  # 30-year fixed USDA
     "OBMMIJUMBO30YF", # 30-year fixed jumbo
+    "DGS10",          # 10-year Treasury yield (daily), for the mortgage rate spread
     # Home prices and sales
     "CSUSHPISA",      # S&P Cotality Case-Shiller U.S. National Home Price Index
+    "USSTHPI",        # FHFA all-transactions house price index
     "MSPUS",          # median sales price of new houses sold
+    "ASPUS",          # average sales price of new houses sold
     "HSN1F",          # new one-family houses sold
     "MSACSR",         # monthly supply of new houses
     "EXHOSLUSM495S",  # existing home sales (FRED keeps only the latest ~13 months)
-    # New supply
-    "HOUST",          # housing starts
-    "PERMIT",         # building permits
-    # Rentals and ownership
+    # Listings: Realtor.com housing inventory (from 2016)
+    "MEDLISPRIUS",    # median listing price
+    "MEDLISPRIPERSQUFEEUS",  # median listing price per square foot
+    "MEDSQUFEEUS",    # median home size in square feet
+    "ACTLISCOUUS",    # active listing count
+    "NEWLISCOUUS",    # new listing count
+    "PENLISCOUUS",    # pending listing count
+    "PRIREDCOUUS",    # price reduced count
+    "MEDDAYONMARUS",  # median days on market
+    # New supply: the construction pipeline
+    "PERMIT",         # building permits, total
+    "PERMIT1",        # building permits, single-family
+    "AUTHNOTTSA",     # permitted but not yet started
+    "HOUST",          # housing starts, total
+    "HOUST1F",        # housing starts, single-family
+    "UNDCONTSA",      # under construction
+    "COMPUTSA",       # completed
+    # Rentals, ownership, and vacancy
     "CUSR0000SEHA",   # CPI rent of primary residence
+    "CUSR0000SAH1",   # CPI shelter
+    "CUSR0000SEHC",   # CPI owners' equivalent rent
     "RRVRUSQ156N",    # rental vacancy rate
+    "RHVRUSQ156N",    # homeowner vacancy rate
+    "EVACANTUSQ176N", # vacant housing units
     "RSAHORUSQ156S",  # homeownership rate
+    # Affordability, credit risk, and the economy
+    "MEHOINUSA672N",  # real median household income (annual)
+    "MDSP",           # mortgage debt service payments as % of disposable income
+    "DRSFRMACBS",     # single-family mortgage delinquency rate
+    "UNRATE",         # unemployment rate
+    "POPTHM",         # population
 ]
 
 out_dir = PROJECT_ROOT / "raw" / "fred"
@@ -57,8 +84,9 @@ for series_id in SERIES_IDS:
         response.raise_for_status()  # stops loudly on HTTP errors
         data = response.json()
     except requests.RequestException as e:
-        # Keep going so one bad series doesn't block the rest, but remember it
-        print(f"FAILED {series_id}: {e}")
+        # Keep going so one bad series doesn't block the rest, but remember it.
+        # Error messages include the request URL, so hide the API key before printing.
+        print(f"FAILED {series_id}: {str(e).replace(API_KEY, '***')}")
         failed.append(series_id)
         continue
 

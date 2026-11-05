@@ -4,7 +4,7 @@ A personal analytics pipeline researching US housing trends, built entirely with
 
 ## Status
 
-Work in progress. The first source is working end to end: 18 national housing series from FRED (mortgage rates by loan type, home prices, sales, construction, rents) are extracted from the API, loaded into DuckDB, and exported to Parquet.
+Work in progress. The first source is working end to end: 43 national housing series from FRED (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk) are extracted from the API, loaded into DuckDB, and exported to Parquet.
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
@@ -56,7 +56,7 @@ The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys
 
 | Source | Data | Access | Status |
 |---|---|---|---|
-| [FRED](https://fred.stlouisfed.org/) | 18 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; Case-Shiller index; new and existing home sales; new home prices and supply; housing starts and permits; rent CPI; rental vacancy; homeownership rate | API, free key | Loaded |
+| [FRED](https://fred.stlouisfed.org/) | 43 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; 10-year Treasury; Case-Shiller and FHFA price indexes; Realtor.com listings (prices, price per sq ft, home size, inventory, days on market, price cuts); new and existing home sales; the construction pipeline from permits to completions; rent, shelter, and owners' equivalent rent CPI; vacancy and homeownership rates; median household income; mortgage debt service and delinquency; unemployment; population | API, free key | Loaded |
 | [FHFA](https://www.fhfa.gov/data/hpi) | House Price Index (national to ZIP level) | File download | Planned |
 | [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI), rents (ZORI), inventory | CSV download | Planned |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/) | Market tracker, price drops, sales metrics | CSV download | Planned |

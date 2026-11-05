@@ -18,24 +18,24 @@ Requirements:
 
 | # | Section | Metrics | Sources | Levels |
 |---|---|---|---|---|
-| 1 | **Home prices** | Typical home value; 1- and 5-year change; 10-year trend; price per square foot; values at the low and high end of the market | Zillow Home Value Index (all homes, bottom tier, top tier); Redfin; S&P Cotality Case-Shiller (national); FHFA House Price Index | US, state, ZIP |
+| 1 | **Home prices** | Typical home value; 1- and 5-year change; 10-year trend; price per square foot; values at the low and high end of the market | Zillow Home Value Index (all homes, bottom tier, top tier); Redfin; Realtor.com listing prices; S&P Cotality Case-Shiller (national); FHFA House Price Index; Census new home sales prices | US, state, ZIP |
 | 2 | **Rents** | Typical rent; 1-year change; HUD Fair Market Rent | Zillow Observed Rent Index; HUD Fair Market Rents and Small Area Fair Market Rents | US, state, ZIP |
-| 3 | **Mortgage rates** | Current and historical rates: conventional 30- and 15-year fixed, plus 30-year FHA, VA, USDA, jumbo, and conforming | FRED (Freddie Mac weekly survey; Optimal Blue daily indexes by loan type) | US |
-| 4 | **Affordability** | Monthly payment on a typical home at today's rate, as a share of median household income; price-to-rent ratio; effective property tax rate | Combines Zillow, FRED, and Census American Community Survey | US, state, ZIP |
-| 5 | **Market activity** | Homes for sale; days on market; sale-to-list price ratio; share of listings with price cuts | Redfin; Zillow | US, state, ZIP |
-| 6 | **New supply and construction** | Housing starts; building permits | FRED; Census Building Permits Survey | US, state, county |
+| 3 | **Mortgage rates** | Current and historical rates: conventional 30- and 15-year fixed, plus 30-year FHA, VA, USDA, jumbo, and conforming | FRED (Freddie Mac weekly survey; Optimal Blue daily indexes by loan type; 10-year Treasury yield, for the mortgage rate spread) | US |
+| 4 | **Affordability** | Monthly payment on a typical home at today's rate, as a share of median household income; price-to-rent ratio; effective property tax rate | Combines Zillow, FRED, and Census American Community Survey; national benchmark of mortgage payments as a share of disposable income | US, state, ZIP |
+| 5 | **Market activity** | Homes for sale (active, new, and pending listings); days on market; sale-to-list price ratio; share of listings with price cuts | Redfin; Zillow; Realtor.com | US, state, ZIP |
+| 6 | **New supply and construction** | The construction pipeline: permits, permitted but not started, starts, under construction, and completions; new home sales and months' supply | FRED; Census Building Permits Survey | US, state, county |
 | 7 | **Outlook** | Published 1-year home value forecast, alongside this project's own projection | Zillow forecasts; project model | US, state, ZIP |
-| 8 | **Housing stock** | Number of homes; single-family vs. apartment buildings; when homes were built; rooms and bedrooms | Census American Community Survey; HUD multifamily property data | US, state, ZIP |
+| 8 | **Housing stock** | Number of homes; single-family vs. apartment buildings; when homes were built; home size (square footage, plus rooms and bedrooms); vacancy rates | Census American Community Survey; Realtor.com; Census housing vacancy survey; HUD multifamily property data | US, state, ZIP |
 | 9 | **People and income** | Median household income and related demographics | Census American Community Survey | US, state, ZIP |
 | 10 | **Neighborhood and access** | School districts and performance; crime; major highways and public transit; distance to airports; grocery stores; utility providers | Census TIGER/Line maps; federal education, crime (FBI), transit, aviation (FAA), food access (USDA), and broadband (FCC) data | Mostly ZIP, via geospatial joins |
-| 11 | **Market risk** | Mortgage delinquency trends | Consumer Financial Protection Bureau | US, state, county |
+| 11 | **Market risk** | Mortgage delinquency trends | Consumer Financial Protection Bureau; Federal Reserve (national) | US, state, county |
 
 ## Design notes
 
 - **ZIP codes vs. ZCTAs.** The Census Bureau publishes data by ZIP Code Tabulation Area (ZCTA), an approximation of USPS ZIP codes. A shared geography table with a ZIP-to-ZCTA, county, and metro crosswalk will let every source join on the same keys.
 - **Geospatial work.** Section 10 calculates distances and counts from map data (for example, the nearest airport to each ZIP) using DuckDB's spatial extension.
 - **Stand-in metrics.** Where the ideal metric has no free national source, the report uses the closest available measure and says so:
-  - Home size uses rooms and bedrooms, since square footage isn't published by ZIP.
+  - Home size uses Realtor.com's median listing square footage down to county level, and rooms and bedrooms at ZIP level, since square footage isn't published by ZIP.
   - "Lowest and highest priced homes" uses Zillow's bottom- and top-tier home values.
   - Planned construction uses building permits.
   - Foreclosure history uses mortgage delinquency rates.
@@ -47,8 +47,8 @@ Requirements:
 | Section | Status |
 |---|---|
 | 3. Mortgage rates | Data loaded (FRED) |
-| 1, 6. Home prices, new supply | National series loaded (FRED); ZIP and state sources next |
-| All others | Planned |
+| 1, 4, 5, 6, 8, 11. Home prices, affordability, market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
+| 2, 7, 9, 10. Rents, outlook, people and income, neighborhood | Planned (national rent and income indicators loaded) |
 
 ## Attribution
 
