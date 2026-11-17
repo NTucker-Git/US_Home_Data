@@ -1,11 +1,14 @@
+import io
 import sys
 from pathlib import Path
 
 import duckdb
 
 # DuckDB draws tables with box characters that Windows' default encoding can't
-# print when output goes to a file (as it will in scheduled runs), so force UTF-8
-sys.stdout.reconfigure(encoding="utf-8")
+# print when output goes to a file (as it will in scheduled runs), so force UTF-8.
+# The isinstance check tells the type checker (Pylance) that reconfigure exists.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = PROJECT_ROOT / "raw" / "fred"

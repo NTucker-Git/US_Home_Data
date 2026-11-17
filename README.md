@@ -4,14 +4,17 @@ A personal analytics pipeline researching US housing trends, built entirely with
 
 ## Status
 
-Work in progress. The first source is working end to end: 43 national housing series from FRED (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk) are extracted from the API, loaded into DuckDB, and exported to Parquet.
+Work in progress. Two sources are loaded into DuckDB and exported to Parquet:
+
+- **FRED**: 43 national housing series (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk), extracted from the API.
+- **Zillow Research**: home values, rents, and one-year home value forecasts at national, state, metro, and ZIP code level (about 890,000 rows).
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- Add Zillow home values, rents, and forecasts at national, state, and ZIP code level
 - Set up dbt staging models, tests, and documentation
+- Add ZIP-level Zillow home values
 - Schedule daily refreshes with Windows Task Scheduler
 
 ## Tech stack
@@ -33,19 +36,30 @@ FRED API ──> extract/extract_fred.py ──> raw/fred/<series>_<date>.json  
                                                 │
                                                 v
                                          staging/fred/observations.parquet
+
+Zillow Research ──> manual download ──> raw/zillow/<YYYY-MM>/*.csv       (original files, one folder per monthly release)
+                                                │
+                                                v
+                        load/load_zillow.py ──> us_home_data.duckdb       (raw_zillow.monthly_values, raw_zillow.forecasts)
+                                                │
+                                                v
+                                         staging/zillow/*.parquet
 ```
 
-- **Raw responses are saved untouched** with dated filenames, so any load can be rerun or audited against the original data.
-- **Loads are idempotent.** The load script upserts with a parameterized `MERGE` on series and date: existing rows are updated, new rows are inserted, and nothing is duplicated on a rerun. This picks up revisions FRED makes to past values, and keeps history for series where FRED only publishes the most recent months.
-- **Missing values are handled explicitly.** FRED marks missing observations with `"."`, which the load converts to `NULL` with `TRY_CAST`.
-- **Errors stop the run.** HTTP errors and missing inputs end the script with an error, so later steps never run on bad data.
+- **Raw data is saved untouched** with dated file or folder names, so any load can be rerun or audited against the original data.
+- **Loads are idempotent.** The load scripts upsert with a parameterized `MERGE` on their natural keys (series and date for FRED; dataset, region, and month for Zillow): existing rows are updated, new rows are inserted, and nothing is duplicated on a rerun. This picks up revisions to past values (Zillow restates its full history when its methodology changes) and keeps history for series where FRED only publishes the most recent months.
+- **Wide files are reshaped to long.** Zillow publishes one column per month; the load uses DuckDB's `UNPIVOT` to produce one row per region per month. Zillow forecasts are kept for every monthly release, so they can later be compared with actual outcomes.
+- **Identifiers keep their format.** Zillow files are read as text first, so ZIP codes such as `01001` keep their leading zeros.
+- **Missing values are handled explicitly.** FRED marks missing observations with `"."`, which the load converts to `NULL` with `TRY_CAST`; empty Zillow cells are dropped.
+- **Errors stop the run.** HTTP errors, missing inputs, unrecognized file names, and unexpected file layouts end the script with an error, so later steps never run on bad data.
+- **Source terms are respected.** Zillow's Terms of Use prohibit automated access to its services, so Zillow files are downloaded by hand each month and only the load is scripted.
 
 ## Project structure
 
 ```
 extract/    One extract script per source (extract_fred.py)
-load/       One load script per source (load_fred.py)
-raw/        Untouched API responses (not tracked in Git)
+load/       One load script per source (load_fred.py, load_zillow.py)
+raw/        Untouched API responses and downloaded files (not tracked in Git)
 staging/    Parquet exports (not tracked in Git)
 logs/       Pipeline run logs (not tracked in Git)
 ```
@@ -58,7 +72,7 @@ The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys
 |---|---|---|---|
 | [FRED](https://fred.stlouisfed.org/) | 43 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; 10-year Treasury; Case-Shiller and FHFA price indexes; Realtor.com listings (prices, price per sq ft, home size, inventory, days on market, price cuts); new and existing home sales; the construction pipeline from permits to completions; rent, shelter, and owners' equivalent rent CPI; vacancy and homeownership rates; median household income; mortgage debt service and delinquency; unemployment; population | API, free key | Loaded |
 | [FHFA](https://www.fhfa.gov/data/hpi) | House Price Index (national to ZIP level) | File download | Planned |
-| [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI), rents (ZORI), inventory | CSV download | Planned |
+| [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI: typical, bottom-tier, and top-tier homes), rents (ZORI), and one-year home value forecasts (ZHVF), for the US, states, metros, and ZIP codes | CSV, downloaded manually each month | Loaded (ZIP-level home values planned) |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/) | Market tracker, price drops, sales metrics | CSV download | Planned |
 | [U.S. Census Bureau](https://www.census.gov/data/developers.html) | ACS home values, rents, occupancy; building permits | API, free key | Planned |
 | [HUD USER](https://www.huduser.gov/portal/datasets/fmr.html) | Fair Market Rents, income limits | API, free token | Planned |
@@ -92,6 +106,17 @@ Requires Windows, Python 3, and a free [FRED API key](https://fred.stlouisfed.or
 
    The load script prints the row count and date range for each series when it finishes.
 
+4. For Zillow, download the CSV files listed in `DATASETS` in [load/load_zillow.py](load/load_zillow.py) from [Zillow Research](https://www.zillow.com/research/data/) into a folder named for the release month (for example `raw\zillow\2026-11\`), keeping the original file names. Then run:
+
+   ```powershell
+   python load/load_zillow.py
+   ```
+
+   The script loads the newest release folder and prints row counts, date ranges, and a duplicate-key check.
+
 ## Attribution
 
-Data from FRED, Federal Reserve Bank of St. Louis. This project is not endorsed by or affiliated with any data provider.
+- Data from FRED, Federal Reserve Bank of St. Louis.
+- Data Provided by Zillow Group.
+
+This project is not endorsed by or affiliated with any data provider.
