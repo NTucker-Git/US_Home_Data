@@ -1,0 +1,13 @@
+# Connection settings for dbt. This file holds no secrets: DuckDB is a local
+# file with no username or password, so it is safe to keep in the repo.
+#
+# dbt looks for profiles.yml in the current folder first, so run dbt commands
+# from inside us_home_dbt/. The database path is relative to this folder.
+
+us_home_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../us_home_data.duckdb
+      threads: 4
