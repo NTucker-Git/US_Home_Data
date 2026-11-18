@@ -21,3 +21,14 @@ snapshot-paths: ["snapshots"]
 clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
+
+
+# Model settings by folder. "+" marks a config that applies to every model in
+# the folder. Staging models are light cleanups of raw tables, so they are
+# views (no storage); they go in the "staging" schema (see
+# macros/generate_schema_name.sql).
+models:
+  us_home_dbt:
+    staging:
+      +materialized: view
+      +schema: staging

@@ -1,0 +1,150 @@
+version: 2
+
+models:
+  - name: stg_zillow__monthly_values
+    description: >
+      Zillow home values (ZHVI) and rents (ZORI). One row per dataset, region,
+      and month. ZHVI tiers: mid = 35th-65th percentile of home values
+      ("typical home value"), bottom = 5th-35th, top = 65th-95th. ZORI is a
+      repeat-rent index of the 35th-65th percentile of listed rents.
+      Data Provided by Zillow Group.
+    columns:
+      - name: dataset
+        description: zhvi_mid, zhvi_bottom, zhvi_top (home values, USD), or zori (monthly rent, USD).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['zhvi_mid', 'zhvi_bottom', 'zhvi_top', 'zori']
+      - name: geography_level
+        description: national, state, metro, or zip.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'state', 'metro', 'zip']
+      - name: region_id
+        description: Zillow's region ID, unique across geography levels.
+        data_tests:
+          - not_null
+      - name: region_name
+        description: >
+          "United States", a state name, a metro name (e.g. "New York, NY"),
+          or a 5-digit ZIP code.
+      - name: zip_code
+        description: 5-digit ZIP code (zip level only), kept as text to preserve leading zeros.
+      - name: state_code
+        description: >
+          Two-letter state abbreviation. ZIP level: the ZIP's state. Metro
+          level: the metro's main state. Empty at national and state level.
+      - name: state_name
+        description: Full state name (state level only).
+      - name: city
+        description: City (zip level only).
+      - name: metro_name
+        description: Metro area name (metro level, and the ZIP's metro at zip level).
+      - name: county_name
+        description: County name (zip level only).
+      - name: size_rank
+        description: Zillow's ranking of the region by size (0 = largest).
+      - name: month_end_date
+        description: Last day of the month the value describes (Zillow's convention).
+        data_tests:
+          - not_null
+      - name: month_start_date
+        description: First day of the same month, for joining with FRED monthly data.
+      - name: value
+        description: Home value or monthly rent in US dollars.
+        data_tests:
+          - not_null
+      - name: source_release
+        description: Zillow release (YYYY-MM folder) the row was last loaded from.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - dataset
+              - region_id
+              - month_end_date
+      # Catches ZIP codes that lost their leading zero (e.g. after a file was
+      # opened and saved in Excel)
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "regexp_full_match(zip_code, '[0-9]{5}')"
+          config:
+            where: "geography_level = 'zip'"
+
+  - name: stg_zillow__forecasts
+    description: >
+      Zillow home value forecasts (ZHVF) for the mid-tier ZHVI: expected
+      percent growth from the base date to each forecast date. Forecasts from
+      every monthly release are kept, so they can be compared with actual
+      outcomes. Data Provided by Zillow Group.
+    columns:
+      - name: dataset
+        description: zhvf_mid.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['zhvf_mid']
+      - name: geography_level
+        description: national, metro, or zip (Zillow publishes no state-level forecast).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'metro', 'zip']
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+      - name: region_name
+        description: '"United States", a metro name, or a 5-digit ZIP code.'
+      - name: zip_code
+        description: 5-digit ZIP code (zip level only).
+      - name: state_code
+        description: Two-letter state abbreviation (zip and metro level).
+      - name: city
+        description: City (zip level only).
+      - name: metro_name
+        description: Metro area name (metro level, and the ZIP's metro at zip level).
+      - name: county_name
+        description: County name (zip level only).
+      - name: size_rank
+        description: Zillow's ranking of the region by size (0 = largest).
+      - name: base_date
+        description: Last month of actual data the forecast starts from.
+        data_tests:
+          - not_null
+      - name: forecast_date
+        description: Month-end date the forecast is for.
+        data_tests:
+          - not_null
+      - name: horizon_months
+        description: Months from base_date to forecast_date (1, 3, or 12).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 3, 12]
+                quote: false
+      - name: growth_pct
+        description: Forecast percent change in home value from base_date to forecast_date (0.9 means +0.9%).
+        data_tests:
+          - not_null
+      - name: source_release
+        description: Zillow release (YYYY-MM folder) the row was last loaded from.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - dataset
+              - region_id
+              - base_date
+              - forecast_date
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "regexp_full_match(zip_code, '[0-9]{5}')"
+          config:
+            where: "geography_level = 'zip'"

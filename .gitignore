@@ -1,7 +1,7 @@
 .venv/
-raw/
-staging/
-logs/
+/raw/
+/staging/
+/logs/
 *.duckdb
 *.parquet
 .env

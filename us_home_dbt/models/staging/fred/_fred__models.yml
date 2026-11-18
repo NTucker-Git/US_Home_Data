@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: stg_fred__observations
+    description: >
+      FRED observations with empty values removed. One row per series per
+      observation date. Series metadata (titles, units, frequency) is not
+      loaded yet.
+    columns:
+      - name: series_id
+        description: FRED series ID, e.g. MORTGAGE30US.
+        data_tests:
+          - not_null
+      - name: observation_date
+        description: Start of the observation period.
+        data_tests:
+          - not_null
+      - name: value
+        description: Observed value, in the series' units.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - observation_date

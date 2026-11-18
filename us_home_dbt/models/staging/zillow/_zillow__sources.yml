@@ -1,0 +1,78 @@
+version: 2
+
+sources:
+  - name: zillow
+    description: >
+      Zillow Research housing data. CSVs are downloaded by hand each month
+      (Zillow's Terms of Use prohibit automated access) and loaded by
+      load/load_zillow.py, which unpivots Zillow's wide monthly columns.
+      Data Provided by Zillow Group.
+    schema: raw_zillow
+    tables:
+      - name: monthly_values
+        description: >
+          ZHVI home values (mid, bottom, and top tier) and ZORI rents. One row
+          per dataset, region, and month. Zillow restates full history when
+          its methodology changes; the load upserts so restatements overwrite
+          older values.
+        columns:
+          - name: dataset
+            description: zhvi_mid, zhvi_bottom, zhvi_top, or zori.
+            data_tests:
+              - not_null
+          - name: geo_level
+            description: Geography of the source file (state, metro, zip). The US row is in the metro file.
+          - name: region_id
+            description: Zillow's region ID, unique across geography levels.
+            data_tests:
+              - not_null
+          - name: region_type
+            description: Zillow's region type (country, msa, state, zip).
+          - name: month_date
+            description: Last day of the month the value describes.
+            data_tests:
+              - not_null
+          - name: release
+            description: Release folder the row was last loaded from (YYYY-MM).
+          - name: loaded_at
+            description: When the row was last inserted or updated by the load script.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - dataset
+                  - region_id
+                  - month_date
+
+      - name: forecasts
+        description: >
+          ZHVF one-month, one-quarter, and one-year home value forecasts (%
+          growth). One row per dataset, region, base date, and forecast date;
+          forecasts from every release are kept.
+        columns:
+          - name: dataset
+            description: zhvf_mid.
+            data_tests:
+              - not_null
+          - name: region_id
+            description: Zillow's region ID.
+            data_tests:
+              - not_null
+          - name: base_date
+            description: Last month of actual data the forecast starts from.
+            data_tests:
+              - not_null
+          - name: forecast_date
+            description: Month-end date the forecast is for.
+            data_tests:
+              - not_null
+          - name: loaded_at
+            description: When the row was last inserted or updated by the load script.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - dataset
+                  - region_id
+                  - base_date
+                  - forecast_date
