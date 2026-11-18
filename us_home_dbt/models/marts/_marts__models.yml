@@ -1,0 +1,126 @@
+version: 2
+
+models:
+  - name: fct_home_values_rents_monthly
+    description: >
+      Zillow home values and rents by region and month, with 1- and 5-year
+      percent changes. Covers the US, states, metros, and ZIP codes, as far as
+      Zillow publishes each measure (no state-level rents; ZIP-level home
+      values not loaded yet). Feeds report sections 1 (home prices) and 2
+      (rents). Data Provided by Zillow Group.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+      - name: geography_level
+        description: national, state, metro, or zip.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'state', 'metro', 'zip']
+      - name: region_name
+        description: '"United States", a state name, a metro name, or a 5-digit ZIP code.'
+        data_tests:
+          - not_null
+      - name: zip_code
+        description: 5-digit ZIP code (zip level only).
+      - name: state_code
+        description: Two-letter state abbreviation (zip and metro level).
+      - name: state_name
+        description: Full state name (state level only).
+      - name: city
+        description: City (zip level only).
+      - name: metro_name
+        description: Metro area name (metro level, and the ZIP's metro at zip level).
+      - name: county_name
+        description: County name (zip level only).
+      - name: month_start_date
+        description: First day of the month.
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: Last day of the month (Zillow's date convention).
+        data_tests:
+          - not_null
+      - name: typical_home_value
+        description: Zillow Home Value Index (ZHVI), mid tier (35th-65th percentile), smoothed and seasonally adjusted, USD.
+      - name: bottom_tier_home_value
+        description: ZHVI bottom tier (5th-35th percentile), USD. Stand-in for the lowest-priced homes.
+      - name: top_tier_home_value
+        description: ZHVI top tier (65th-95th percentile), USD. Stand-in for the highest-priced homes.
+      - name: typical_rent
+        description: Zillow Observed Rent Index (ZORI), all homes plus multifamily, smoothed, USD per month.
+      - name: typical_home_value_change_1y_pct
+        description: Percent change in typical_home_value from the same month a year earlier (5.0 means +5%). NULL if that month is missing.
+      - name: typical_home_value_change_5y_pct
+        description: Percent change in typical_home_value from the same month five years earlier. NULL if that month is missing.
+      - name: typical_rent_change_1y_pct
+        description: Percent change in typical_rent from the same month a year earlier. NULL if that month is missing.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - region_id
+              - month_start_date
+      # Every row should hold at least one measure
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >
+              coalesce(typical_home_value, bottom_tier_home_value,
+              top_tier_home_value, typical_rent) is not null
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "bottom_tier_home_value <= typical_home_value and typical_home_value <= top_tier_home_value"
+          config:
+            where: "bottom_tier_home_value is not null and top_tier_home_value is not null"
+
+  - name: home_values_rents_current
+    description: >
+      Latest home value and rent figures per region: the headline numbers for
+      report sections 1 and 2. Home values and rents each carry their own "as
+      of" month, since a region's latest month can differ by measure.
+      Data Provided by Zillow Group.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+          - unique
+      - name: geography_level
+        description: national, state, metro, or zip.
+        data_tests:
+          - not_null
+      - name: region_name
+        description: '"United States", a state name, a metro name, or a 5-digit ZIP code.'
+      - name: zip_code
+        description: 5-digit ZIP code (zip level only).
+      - name: state_code
+        description: Two-letter state abbreviation (zip and metro level).
+      - name: state_name
+        description: Full state name (state level only).
+      - name: city
+        description: City (zip level only).
+      - name: metro_name
+        description: Metro area name.
+      - name: county_name
+        description: County name (zip level only).
+      - name: home_value_as_of
+        description: Month-end date of the latest home value.
+      - name: typical_home_value
+        description: Latest ZHVI mid tier, USD.
+      - name: bottom_tier_home_value
+        description: Latest ZHVI bottom tier, USD.
+      - name: top_tier_home_value
+        description: Latest ZHVI top tier, USD.
+      - name: typical_home_value_change_1y_pct
+        description: 1-year percent change in typical home value.
+      - name: typical_home_value_change_5y_pct
+        description: 5-year percent change in typical home value.
+      - name: rent_as_of
+        description: Month-end date of the latest rent.
+      - name: typical_rent
+        description: Latest ZORI, USD per month.
+      - name: typical_rent_change_1y_pct
+        description: 1-year percent change in typical rent.

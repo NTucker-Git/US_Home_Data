@@ -32,3 +32,8 @@ models:
     staging:
       +materialized: view
       +schema: staging
+    # Marts feed the report and dashboard and are queried repeatedly, so they
+    # are stored as tables in the "marts" schema
+    marts:
+      +materialized: table
+      +schema: marts
