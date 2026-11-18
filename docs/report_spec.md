@@ -42,6 +42,16 @@ Requirements:
 - **Considered and excluded.** Lot size, HOA fees, and property ownership history have no free national source. Ownership history also involves private individuals' records, so it is out of scope.
 - **Revisions.** Several sources revise past values. Loads use upserts rather than append-only inserts, so the latest published numbers always win.
 
+## Release plan
+
+The report is built in versions, starting with the sources already loaded (FRED and Zillow).
+
+| Version | Contents |
+|---|---|
+| **v1** | Sections 1 (home prices), 2 (rents), 3 (mortgage rates), and 7 (outlook: Zillow's forecast), plus: **affordability**, the monthly payment on the typical home at today's 30-year rate and the price-to-rent ratio, at every level where the data exists, and payment as a share of median household income nationally; a **national market panel** for sections 5, 6, and 11 (listings, days on market, the construction pipeline, new home sales, months' supply, delinquency); and a **comparison** of each ZIP code with its state and the US, including its rank within the state |
+| **v1.1** | This project's own home value projection next to Zillow's forecast, later scored against actual outcomes; inflation-adjusted home values |
+| **v2** | State-level FRED series (listings, house price index, unemployment); Census American Community Survey data by ZIP (income, housing stock, property taxes), completing affordability and sections 8 and 9; a reference table of every FRED series with its units, owner, and terms |
+
 ## Build status
 
 | Section | Status |

@@ -64,6 +64,7 @@ SERIES_IDS = [
     "RSAHORUSQ156S",  # homeownership rate
     # Affordability, credit risk, and the economy
     "MEHOINUSA672N",  # real median household income (annual)
+    "MEHOINUSA646N",  # median household income, current dollars (annual; added 2026-11-17)
     "MDSP",           # mortgage debt service payments as % of disposable income
     "DRSFRMACBS",     # single-family mortgage delinquency rate
     "UNRATE",         # unemployment rate

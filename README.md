@@ -6,7 +6,7 @@ A personal analytics pipeline researching US housing trends, built entirely with
 
 Work in progress. Two sources are loaded into DuckDB and exported to Parquet:
 
-- **FRED**: 43 national housing series (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk), extracted from the API.
+- **FRED**: 44 national housing series (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk), extracted from the API.
 - **Zillow Research**: home values, rents, and one-year home value forecasts for the US, 51 states, about 900 metros, and about 28,000 ZIP codes (about 7.9 million rows).
 
 A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested staging views and the first marts: monthly and current home values and rents for every region, with 1- and 5-year changes. These feed report sections 1 (home prices) and 2 (rents). `dbt build` runs 5 models and 49 data tests.
@@ -84,7 +84,7 @@ The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys
 
 | Source | Data | Access | Status |
 |---|---|---|---|
-| [FRED](https://fred.stlouisfed.org/) | 43 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; 10-year Treasury; Case-Shiller and FHFA price indexes; Realtor.com listings (prices, price per sq ft, home size, inventory, days on market, price cuts); new and existing home sales; the construction pipeline from permits to completions; rent, shelter, and owners' equivalent rent CPI; vacancy and homeownership rates; median household income; mortgage debt service and delinquency; unemployment; population | API, free key | Loaded |
+| [FRED](https://fred.stlouisfed.org/) | 44 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; 10-year Treasury; Case-Shiller and FHFA price indexes; Realtor.com listings (prices, price per sq ft, home size, inventory, days on market, price cuts); new and existing home sales; the construction pipeline from permits to completions; rent, shelter, and owners' equivalent rent CPI; vacancy and homeownership rates; median household income; mortgage debt service and delinquency; unemployment; population | API, free key | Loaded |
 | [FHFA](https://www.fhfa.gov/data/hpi) | House Price Index (national to ZIP level) | File download | Planned |
 | [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI: typical, bottom-tier, and top-tier homes), rents (ZORI), and one-year home value forecasts (ZHVF), for the US, states, metros, and ZIP codes | CSV, downloaded manually each month | Loaded (bottom and top tiers for the US, states, and metros; Zillow doesn't publish them by ZIP) |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/) | Market tracker, price drops, sales metrics | CSV download | Planned |
