@@ -7,14 +7,16 @@ A personal analytics pipeline researching US housing trends, built entirely with
 Work in progress. Two sources are loaded into DuckDB and exported to Parquet:
 
 - **FRED**: 43 national housing series (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk), extracted from the API.
-- **Zillow Research**: home values, rents, and one-year home value forecasts at national, state, metro, and ZIP code level (about 890,000 rows).
+- **Zillow Research**: home values, rents, and one-year home value forecasts for the US, 51 states, about 900 metros, and about 28,000 ZIP codes (about 7.9 million rows).
+
+A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested staging views and the first marts: monthly and current home values and rents for every region, with 1- and 5-year changes. These feed report sections 1 (home prices) and 2 (rents). `dbt build` runs 5 models and 49 data tests.
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- Set up dbt staging models, tests, and documentation
-- Add ZIP-level Zillow home values
+- Marts for mortgage rates and the home value outlook (report sections 3 and 7)
+- A first version of the "pick a ZIP, get a report" output
 - Schedule daily refreshes with Windows Task Scheduler
 
 ## Tech stack
@@ -22,7 +24,7 @@ Next up:
 - **Python** (`requests`, `python-dotenv`) for extraction and loading
 - **DuckDB** as the local analytical database
 - **Parquet** for storing staged data
-- **dbt-core** (dbt-duckdb) for models, tests, and documentation (planned)
+- **dbt-core** (dbt-duckdb, dbt_utils) for models, tests, and documentation
 - **Power BI Desktop** for visualization (planned)
 - **Windows Task Scheduler** for daily refreshes (planned)
 
@@ -44,6 +46,14 @@ Zillow Research ──> manual download ──> raw/zillow/<YYYY-MM>/*.csv      
                                                 │
                                                 v
                                          staging/zillow/*.parquet
+
+us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
+        │
+        v   dbt build (us_home_dbt/)
+    staging   stg_fred__observations, stg_zillow__monthly_values, stg_zillow__forecasts   (views)
+        │
+        v
+    marts     fct_home_values_rents_monthly, home_values_rents_current                     (tables)
 ```
 
 - **Raw data is saved untouched** with dated file or folder names, so any load can be rerun or audited against the original data.
@@ -52,6 +62,8 @@ Zillow Research ──> manual download ──> raw/zillow/<YYYY-MM>/*.csv      
 - **Identifiers keep their format.** Zillow files are read as text first, so ZIP codes such as `01001` keep their leading zeros.
 - **Missing values are handled explicitly.** FRED marks missing observations with `"."`, which the load converts to `NULL` with `TRY_CAST`; empty Zillow cells are dropped.
 - **Errors stop the run.** HTTP errors, missing inputs, unrecognized file names, and unexpected file layouts end the script with an error, so later steps never run on bad data.
+- **Every layer is tested.** dbt tests check the raw sources and each model: no missing keys, no duplicate keys (series and date, or dataset, region, and month), allowed values, 5-digit ZIP codes, and bottom-tier ≤ typical ≤ top-tier home values.
+- **Percent changes compare exact dates.** 1- and 5-year changes join each month to the same month 12 or 60 months earlier, so a gap in the data leaves the change empty instead of comparing the wrong months.
 - **Source terms are respected.** Zillow's Terms of Use prohibit automated access to its services, so Zillow files are downloaded by hand each month and only the load is scripted.
 
 ## Project structure
@@ -59,6 +71,8 @@ Zillow Research ──> manual download ──> raw/zillow/<YYYY-MM>/*.csv      
 ```
 extract/    One extract script per source (extract_fred.py)
 load/       One load script per source (load_fred.py, load_zillow.py)
+us_home_dbt/  dbt project: sources, staging models, marts, tests
+docs/       Report specification
 raw/        Untouched API responses and downloaded files (not tracked in Git)
 staging/    Parquet exports (not tracked in Git)
 logs/       Pipeline run logs (not tracked in Git)
@@ -72,7 +86,7 @@ The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys
 |---|---|---|---|
 | [FRED](https://fred.stlouisfed.org/) | 43 national series: 30- and 15-year mortgage rates; FHA, VA, USDA, jumbo, and conforming rate indexes; 10-year Treasury; Case-Shiller and FHFA price indexes; Realtor.com listings (prices, price per sq ft, home size, inventory, days on market, price cuts); new and existing home sales; the construction pipeline from permits to completions; rent, shelter, and owners' equivalent rent CPI; vacancy and homeownership rates; median household income; mortgage debt service and delinquency; unemployment; population | API, free key | Loaded |
 | [FHFA](https://www.fhfa.gov/data/hpi) | House Price Index (national to ZIP level) | File download | Planned |
-| [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI: typical, bottom-tier, and top-tier homes), rents (ZORI), and one-year home value forecasts (ZHVF), for the US, states, metros, and ZIP codes | CSV, downloaded manually each month | Loaded (ZIP-level home values planned) |
+| [Zillow Research](https://www.zillow.com/research/data/) | Home values (ZHVI: typical, bottom-tier, and top-tier homes), rents (ZORI), and one-year home value forecasts (ZHVF), for the US, states, metros, and ZIP codes | CSV, downloaded manually each month | Loaded (bottom and top tiers for the US, states, and metros; Zillow doesn't publish them by ZIP) |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/) | Market tracker, price drops, sales metrics | CSV download | Planned |
 | [U.S. Census Bureau](https://www.census.gov/data/developers.html) | ACS home values, rents, occupancy; building permits | API, free key | Planned |
 | [HUD USER](https://www.huduser.gov/portal/datasets/fmr.html) | Fair Market Rents, income limits | API, free token | Planned |
@@ -106,13 +120,32 @@ Requires Windows, Python 3, and a free [FRED API key](https://fred.stlouisfed.or
 
    The load script prints the row count and date range for each series when it finishes.
 
-4. For Zillow, download the CSV files listed in `DATASETS` in [load/load_zillow.py](load/load_zillow.py) from [Zillow Research](https://www.zillow.com/research/data/) into a folder named for the release month (for example `raw\zillow\2026-11\`), keeping the original file names. Then run:
+4. For Zillow, download these files from [Zillow Research](https://www.zillow.com/research/data/) into a folder named for the release month (for example `raw\zillow\2026-11\`), keeping the original file names:
+
+   | Data | Geographies | File name suffix |
+   |---|---|---|
+   | Home values (ZHVI), typical | Metro & U.S., State, ZIP Code | `_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv` |
+   | Home values, bottom and top tier | Metro & U.S., State | `_zhvi_uc_sfrcondo_tier_0.0_0.33_sm_sa_month.csv`, `_zhvi_uc_sfrcondo_tier_0.67_1.0_sm_sa_month.csv` |
+   | Rents (ZORI) | Metro & U.S., ZIP Code | `_zori_uc_sfrcondomfr_sm_month.csv` |
+   | Home value forecasts (ZHVF) | Metro & U.S., ZIP Code | `_zhvf_growth_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv` |
+
+   Then run:
 
    ```powershell
    python load/load_zillow.py
    ```
 
    The script loads the newest release folder and prints row counts, date ranges, and a duplicate-key check.
+
+5. Build and test the dbt models (run dbt from inside the project folder, where `profiles.yml` lives):
+
+   ```powershell
+   cd us_home_dbt
+   dbt deps     # install dbt_utils
+   dbt build    # build the models and run the tests
+   dbt docs generate
+   dbt docs serve   # browse model docs and the lineage graph at http://localhost:8080
+   ```
 
 ## Attribution
 

@@ -36,7 +36,7 @@ Requirements:
 - **Geospatial work.** Section 10 calculates distances and counts from map data (for example, the nearest airport to each ZIP) using DuckDB's spatial extension.
 - **Stand-in metrics.** Where the ideal metric has no free national source, the report uses the closest available measure and says so:
   - Home size uses Realtor.com's median listing square footage down to county level, and rooms and bedrooms at ZIP level, since square footage isn't published by ZIP.
-  - "Lowest and highest priced homes" uses Zillow's bottom- and top-tier home values.
+  - "Lowest and highest priced homes" uses Zillow's bottom- and top-tier home values (5th-35th and 65th-95th percentiles). Zillow publishes these tiers for states and larger areas but not for ZIP codes, so ZIP reports show the typical (mid-tier) value only.
   - Planned construction uses building permits.
   - Foreclosure history uses mortgage delinquency rates.
 - **Considered and excluded.** Lot size, HOA fees, and property ownership history have no free national source. Ownership history also involves private individuals' records, so it is out of scope.
@@ -46,10 +46,15 @@ Requirements:
 
 | Section | Status |
 |---|---|
+| 1, 2. Home prices, rents | Zillow home values and rents loaded and modeled in dbt for the US, states, metros, and ZIP codes; first marts built. Price per square foot and HUD Fair Market Rents to come |
 | 3. Mortgage rates | Data loaded (FRED) |
-| 1, 4, 5, 6, 8, 11. Home prices, affordability, market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
-| 2, 7, 9, 10. Rents, outlook, people and income, neighborhood | Planned (national rent and income indicators loaded) |
+| 7. Outlook | Zillow home value forecasts loaded (US, metro, ZIP) |
+| 4, 5, 6, 8, 11. Affordability, market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
+| 9, 10. People and income, neighborhood | Planned (national income indicators loaded) |
 
 ## Attribution
 
-Data from FRED, Federal Reserve Bank of St. Louis. Additional source attributions will be added as each source is loaded.
+- Data from FRED, Federal Reserve Bank of St. Louis.
+- Data Provided by Zillow Group.
+
+Additional source attributions will be added as each source is loaded.
