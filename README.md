@@ -14,7 +14,7 @@ A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested sta
 - Monthly and current home values and rents for every region, with 1- and 5-year changes (report sections 1 and 2).
 - Mortgage rates by loan type, with weekly and yearly changes, the 52-week range, and the spread over the 10-year Treasury (report section 3).
 
-`dbt build` runs 7 models, 1 seed, and 67 data tests.
+`dbt build` runs 7 models, 2 seeds (mortgage rate labels; state FIPS codes, abbreviations, and names from the Census Bureau), and 76 data tests.
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 

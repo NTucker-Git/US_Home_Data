@@ -41,3 +41,36 @@ seeds:
         description: Sort order in the report.
         data_tests:
           - unique
+
+  - name: states
+    description: >
+      The 50 states and the District of Columbia with their FIPS codes, postal
+      abbreviations, and names, from the Census Bureau's state code file
+      (https://www2.census.gov/geo/docs/reference/state.txt, retrieved
+      2026-11-18). Territories are left out because the loaded sources don't
+      cover them. First piece of the shared geography dimension: it links
+      Zillow's state names (state level) and abbreviations (ZIP and metro level).
+    config:
+      column_types:
+        state_fips: varchar
+    data_tests:
+      # FIPS codes must be exactly two digits (leading zero kept)
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "regexp_full_match(state_fips, '[0-9]{2}')"
+    columns:
+      - name: state_fips
+        description: 2-digit state FIPS code, kept as text ("01" for Alabama).
+        data_tests:
+          - not_null
+          - unique
+      - name: state_code
+        description: 2-letter USPS abbreviation.
+        data_tests:
+          - not_null
+          - unique
+      - name: state_name
+        description: Full state name, as Zillow spells it.
+        data_tests:
+          - not_null
+          - unique

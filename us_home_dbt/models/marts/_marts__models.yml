@@ -98,8 +98,18 @@ models:
         description: 5-digit ZIP code (zip level only).
       - name: state_code
         description: Two-letter state abbreviation (zip and metro level).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('states')
+                field: state_code
       - name: state_name
         description: Full state name (state level only).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('states')
+                field: state_name
       - name: city
         description: City (zip level only).
       - name: metro_name
