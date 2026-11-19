@@ -14,14 +14,15 @@ A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested sta
 - Monthly and current home values and rents for every region, with 1- and 5-year changes (report sections 1 and 2).
 - Mortgage rates by loan type, with weekly and yearly changes, the 52-week range, and the spread over the 10-year Treasury (report section 3).
 - Affordability for every region: the monthly principal-and-interest payment on the typical home at today's 30-year rate with 20% down, the same payment a year earlier, the price-to-rent ratio, and nationally the payment as a share of median household income (report section 4).
+- Zillow's 1-, 3-, and 12-month home value forecasts for the US, metros, and ZIP codes, with every release kept so forecasts can later be scored against actual outcomes (report section 7).
 
-`dbt build` runs 8 models, 2 seeds (mortgage rate labels; state FIPS codes, abbreviations, and names from the Census Bureau), and 82 data tests.
+`dbt build` runs 10 models, 2 seeds (mortgage rate labels; state FIPS codes, abbreviations, and names from the Census Bureau), and 90 data tests.
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- Marts for the home value outlook, a national market panel, and ZIP comparisons (the rest of report v1)
+- Marts for a national market panel and ZIP comparisons (the rest of report v1)
 - A first version of the "pick a ZIP, get a report" output
 - Schedule daily refreshes with Windows Task Scheduler
 
@@ -60,7 +61,8 @@ us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
         │
         v
     marts     fct_home_values_rents_monthly, home_values_rents_current,                    (tables)
-              fct_mortgage_rates, mortgage_rates_current, affordability_current
+              fct_mortgage_rates, mortgage_rates_current, affordability_current,
+              fct_home_value_forecasts, home_value_forecast_current
 ```
 
 - **Raw data is saved untouched** with dated file or folder names, so any load can be rerun or audited against the original data.

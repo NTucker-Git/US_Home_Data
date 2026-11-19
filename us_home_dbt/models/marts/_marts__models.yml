@@ -314,3 +314,78 @@ models:
             expression: "price_to_rent_ratio > 0"
           config:
             where: "price_to_rent_ratio is not null"
+
+  - name: fct_home_value_forecasts
+    description: >
+      Zillow Home Value Forecasts (ZHVF, mid tier) for the US, metros, and ZIP
+      codes (report section 7), one row per region per monthly forecast
+      release. Zillow publishes no state-level forecast. Every release is
+      kept so forecasts can be compared with what actually happened.
+      Data Provided by Zillow Group.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+      - name: geography_level
+        description: national, metro, or zip.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['national', 'metro', 'zip']
+      - name: region_name
+        description: '"United States", a metro name, or a 5-digit ZIP code.'
+      - name: base_date
+        description: Month-end date the forecast starts from (the latest home value month at release).
+        data_tests:
+          - not_null
+      - name: source_release
+        description: Zillow release folder the forecast came from (YYYY-MM).
+      - name: forecast_1m_pct
+        description: Forecast percent change in typical home value over 1 month (0.9 means +0.9%).
+      - name: forecast_3m_pct
+        description: Forecast percent change to the next quarter end (about 3 months).
+      - name: forecast_12m_pct
+        description: Forecast percent change over 12 months.
+      - name: forecast_12m_date
+        description: Month-end date the 12-month forecast targets.
+      - name: base_home_value
+        description: Typical home value (ZHVI mid tier) at base_date, USD. NULL if Zillow publishes a forecast but no home value for the region.
+      - name: forecast_12m_home_value
+        description: base_home_value grown by forecast_12m_pct, USD.
+      - name: actual_12m_home_value
+        description: Typical home value actually published for forecast_12m_date, USD. NULL until that month is released.
+      - name: actual_change_12m_pct
+        description: Actual percent change from base_date to forecast_12m_date, for scoring the forecast.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - region_id
+              - base_date
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "coalesce(forecast_1m_pct, forecast_3m_pct, forecast_12m_pct) is not null"
+      # Guard against unit mix-ups (e.g. 0.009 vs 0.9)
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "forecast_12m_pct between -50 and 50"
+          config:
+            where: "forecast_12m_pct is not null"
+
+  - name: home_value_forecast_current
+    description: >
+      Latest Zillow home value forecast per region: the headline numbers for
+      report section 7. Data Provided by Zillow Group.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+          - unique
+      - name: base_date
+        description: Month-end date the forecast starts from.
+      - name: forecast_12m_pct
+        description: Forecast percent change over 12 months.
+      - name: forecast_12m_home_value
+        description: The 12-month forecast in dollars.

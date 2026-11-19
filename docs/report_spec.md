@@ -58,7 +58,7 @@ The report is built in versions, starting with the sources already loaded (FRED 
 |---|---|
 | 1, 2. Home prices, rents | Zillow home values and rents loaded and modeled in dbt for the US, states, metros, and ZIP codes; first marts built. Price per square foot and HUD Fair Market Rents to come |
 | 3. Mortgage rates | Marts built: every rate by date, and the latest rates with 1-week and 1-year changes, 52-week range, and spread over the 10-year Treasury |
-| 7. Outlook | Zillow home value forecasts loaded (US, metro, ZIP) |
+| 7. Outlook | Marts built: Zillow's 1-, 3-, and 12-month forecasts for the US, metros, and ZIP codes, also in dollars; each release kept for later scoring against actual outcomes. This project's own projection comes in v1.1 |
 | 4. Affordability | Mart built for the US, states, metros, and ZIP codes: monthly principal-and-interest payment on the typical home (30-year fixed, 20% down) now and a year earlier, price-to-rent ratio, and national payment-to-income. Property tax, insurance, and local income come in v2 |
 | 5, 6, 8, 11. Market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
 | 9, 10. People and income, neighborhood | Planned (national income indicators loaded) |
