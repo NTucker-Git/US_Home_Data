@@ -54,6 +54,8 @@ The report is built in versions, starting with the sources already loaded (FRED 
 
 ## Build status
 
+**Report v1 is built** (`report/build_report.py`): a 4-page PDF for any ZIP code, state, or the US, covering sections 1, 2, 3, 4, and 7, the national market snapshot (5, 6, 11), and the ZIP-vs.-state-vs.-US comparison.
+
 | Section | Status |
 |---|---|
 | 1, 2. Home prices, rents | Zillow home values and rents loaded and modeled in dbt for the US, states, metros, and ZIP codes; first marts built. Price per square foot and HUD Fair Market Rents to come |

@@ -18,3 +18,9 @@ personal/
 
 # Personal editor settings (kept local)
 .vscode/
+
+# Generated reports (contain Zillow-derived figures; share deliberately)
+/output/
+
+# Python bytecode caches
+__pycache__/

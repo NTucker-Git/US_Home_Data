@@ -20,11 +20,11 @@ A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested sta
 
 `dbt build` runs 13 models, 3 seeds (labels for the mortgage rate and market panel series; state FIPS codes, abbreviations, and names from the Census Bureau), and 117 data tests.
 
-The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
+The marts feed a **"pick a ZIP, get a report" PDF** ([report/](report/)): one template that builds a 4-page market report for any ZIP code, any state, or the US, with charts, comparisons with the state and the country, and source notes. The report's contents are defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- A first version of the "pick a ZIP, get a report" output, built on these marts
+- Report v1.1: this project's own home value projection next to Zillow's, and inflation-adjusted values
 - A first version of the "pick a ZIP, get a report" output
 - Schedule daily refreshes with Windows Task Scheduler
 
@@ -34,6 +34,7 @@ Next up:
 - **DuckDB** as the local analytical database
 - **Parquet** for storing staged data
 - **dbt-core** (dbt-duckdb, dbt_utils) for models, tests, and documentation
+- **Jinja2** HTML templates, **matplotlib** charts, and headless **Microsoft Edge** (or Chrome) to print the report to PDF
 - **Power BI Desktop** for visualization (planned)
 - **Windows Task Scheduler** for daily refreshes (planned)
 
@@ -67,6 +68,9 @@ us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
               fct_home_value_forecasts, home_value_forecast_current,
               fct_national_market_indicators, national_market_panel_current,
               zip_comparison_current
+        │
+        v   report/build_report.py
+    output/reports/report_<zip|state|us>_<date>.html and .pdf
 ```
 
 - **Raw data is saved untouched** with dated file or folder names, so any load can be rerun or audited against the original data.
@@ -86,10 +90,12 @@ us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
 extract/    One extract script per source (extract_fred.py)
 load/       One load script per source (load_fred.py, load_zillow.py)
 us_home_dbt/  dbt project: sources, staging models, marts, tests
+report/     Report builder: build_report.py, charts.py, templates/report.html.j2
 docs/       Report specification
 raw/        Untouched API responses and downloaded files (not tracked in Git)
 staging/    Parquet exports (not tracked in Git)
 logs/       Pipeline run logs (not tracked in Git)
+output/     Generated reports (not tracked in Git)
 ```
 
 The DuckDB database (`us_home_data.duckdb`) and the `.env` file holding API keys are also not tracked in Git.
@@ -160,6 +166,16 @@ Requires Windows, Python 3, and a free [FRED API key](https://fred.stlouisfed.or
    dbt docs generate
    dbt docs serve   # browse model docs and the lineage graph at http://localhost:8080
    ```
+
+6. Build a report (from the project root):
+
+   ```powershell
+   python report/build_report.py --zip 77494   # any 5-digit ZIP code
+   python report/build_report.py --state TX    # any state code
+   python report/build_report.py --us          # the United States
+   ```
+
+   The HTML and PDF are saved in `output/reports/`. The PDF is printed by Microsoft Edge (installed with Windows) or Google Chrome in headless mode; add `--html-only` to skip it.
 
 ## Attribution
 

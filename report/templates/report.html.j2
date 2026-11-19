@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housing Market Report: {{ focus.name }}</title>
+<style>
+  :root {
+    --surface: #ffffff;
+    --surface-2: #f6f5f2;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #6f6e69;
+    --rule: #e4e3df;
+    --accent: #2a78d6;
+    --slot-zip: #2a78d6;
+    --slot-state: #eb6834;
+    --slot-national: #1baf7a;
+  }
+  @page { size: Letter; margin: 0.55in 0.6in 0.5in; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0; background: var(--surface); color: var(--text-primary);
+    font: 10pt/1.45 "Segoe UI", Arial, sans-serif;
+  }
+  .page-wrap { max-width: 7.3in; margin: 0 auto; }
+  /* A table whose footer repeats on every printed page (Chromium repeats tfoot) */
+  table.layout { width: 100%; border-collapse: collapse; }
+  table.layout > tfoot td { padding-top: 10px; }
+  .footer {
+    border-top: 1px solid var(--rule); padding-top: 6px;
+    font-size: 7.5pt; color: var(--text-muted); display: flex; justify-content: space-between; gap: 12px;
+  }
+  header { border-bottom: 2px solid var(--text-primary); padding-bottom: 10px; margin-bottom: 14px; }
+  .eyebrow { font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
+  h1 { font-size: 22pt; line-height: 1.15; margin: 2px 0 2px; font-weight: 650; }
+  .subtitle { color: var(--text-secondary); font-size: 9.5pt; }
+  .asof { color: var(--text-muted); font-size: 8pt; margin-top: 6px; }
+  h2 {
+    font-size: 12.5pt; margin: 18px 0 6px; padding-bottom: 3px;
+    border-bottom: 1px solid var(--rule); font-weight: 650;
+  }
+  h2 .num { color: var(--text-muted); font-weight: 500; margin-right: 6px; }
+  /* Sections may continue onto the next page; tables, charts, and notes
+     stay whole, and a heading never ends a page */
+  table.data, .chart, .callout, .note, .tiles { break-inside: avoid; }
+  table.data.long { break-inside: auto; }
+  table.data tr { break-inside: avoid; }
+  h2, .chart-title { break-after: avoid; }
+  p { margin: 4px 0 8px; }
+  .note { font-size: 8pt; color: var(--text-muted); margin-top: 4px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 4px 0 6px; }
+  .tile { background: var(--surface-2); border-radius: 6px; padding: 8px 10px; }
+  .tile .label { font-size: 7.5pt; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .value { font-size: 15pt; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .tile .sub { font-size: 7.5pt; color: var(--text-secondary); }
+
+  table.data { width: 100%; border-collapse: collapse; font-size: 9pt; font-variant-numeric: tabular-nums; margin: 4px 0 6px; }
+  table.data th {
+    text-align: right; font-weight: 600; color: var(--text-secondary); font-size: 8pt;
+    border-bottom: 1px solid var(--text-primary); padding: 3px 6px;
+  }
+  table.data td { text-align: right; padding: 3px 6px; border-bottom: 1px solid var(--rule); }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data tr.group td { font-weight: 600; color: var(--text-secondary); font-size: 8pt; padding-top: 8px; border-bottom: none; }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+  .swatch.zip { background: var(--slot-zip); }
+  .swatch.state { background: var(--slot-state); }
+  .swatch.national { background: var(--slot-national); }
+  .chart { margin: 6px 0 2px; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .chart-title { font-size: 8.5pt; font-weight: 600; color: var(--text-secondary); margin-top: 8px; }
+  .callout { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 6px 10px; margin: 6px 0; font-size: 9.5pt; }
+  .about { font-size: 8pt; color: var(--text-secondary); }
+  .about ul { margin: 4px 0; padding-left: 16px; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+<table class="layout">
+<tfoot><tr><td>
+  <div class="footer">
+    <span>Data Provided by Zillow Group. Data from FRED, Federal Reserve Bank of St. Louis.</span>
+    <span>Housing market report: {{ focus.name }} &middot; generated {{ generated | day }}</span>
+  </div>
+</td></tr></tfoot>
+<tbody><tr><td>
+
+{% set fv = focus['values'] %}
+{% set fa = focus['afford'] %}
+{% set ff = focus['forecast'] %}
+<header>
+  <div class="eyebrow">Housing market report</div>
+  <h1>{% if focus.level == 'zip' %}ZIP {{ focus.short }}{% else %}{{ focus.name }}{% endif %}</h1>
+  <div class="subtitle">
+    {% if focus.level == 'zip' %}{{ fv.city }}, {{ geos[1].name }} &middot; {{ fv.county_name }} &middot; {{ fv.metro_name }}
+    {% elif focus.level == 'state' %}State overview, compared with the United States
+    {% else %}National overview{% endif %}
+  </div>
+  <div class="asof">
+    Home values and rents as of {{ as_of | month }} (Zillow) &middot;
+    Mortgage rates as of {{ rate_as_of | day }} &middot; Generated {{ generated | day }}
+  </div>
+</header>
+
+<section>
+  <div class="tiles">
+    <div class="tile">
+      <div class="label">Typical home value</div>
+      <div class="value">{{ fv.typical_home_value | money }}</div>
+      <div class="sub">{{ fv.typical_home_value_change_1y_pct | signed_pct(2) }} over 1 year</div>
+    </div>
+    <div class="tile">
+      <div class="label">Typical rent</div>
+      {% if fv.typical_rent is not none %}
+      <div class="value">{{ fv.typical_rent | money }}</div>
+      <div class="sub">{% if fv.typical_rent_change_1y_pct is not none %}{{ fv.typical_rent_change_1y_pct | signed_pct(2) }} over 1 year{% else %}1-year change not available{% endif %}</div>
+      {% elif state_medians and focus.level == 'state' %}
+      <div class="value">{{ state_medians.rent | money }}</div>
+      <div class="sub">median of {{ state_medians.zips_with_rent | num }} ZIPs</div>
+      {% else %}
+      <div class="value">{{ '—' }}</div><div class="sub">not published</div>
+      {% endif %}
+    </div>
+    <div class="tile">
+      <div class="label">Monthly payment</div>
+      <div class="value">{{ fa.get('monthly_payment') | money }}</div>
+      <div class="sub">principal &amp; interest, {{ down_payment_pct }}% down</div>
+    </div>
+    <div class="tile">
+      <div class="label">30-year rate</div>
+      <div class="value">{{ rates[0].rate_pct | rate }}</div>
+      <div class="sub">{{ rates[0].change_1y_pct_pts | signed_pts }} over 1 year</div>
+    </div>
+    <div class="tile">
+      <div class="label">Zillow 1-year forecast</div>
+      {% if ff.get('forecast_12m_pct') is not none %}
+      <div class="value">{{ ff.forecast_12m_pct | signed_pct }}</div>
+      <div class="sub">to {{ ff.forecast_12m_date | month }}</div>
+      {% elif state_medians and focus.level == 'state' %}
+      <div class="value">{{ state_medians.forecast_12m | signed_pct }}</div>
+      <div class="sub">median of {{ state_medians.zips_with_forecast | num }} ZIPs</div>
+      {% else %}
+      <div class="value">{{ '—' }}</div><div class="sub">not published</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">1</span>Home prices</h2>
+  <table class="data">
+    <thead><tr><th>Area</th><th>Typical home value</th><th>1-year change</th><th>5-year change</th>{% if focus.level != 'national' %}<th>vs. {{ focus.short }}</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for g in geos %}
+      <tr>
+        <td><span class="swatch {{ g.level }}"></span>{{ g.name }}</td>
+        <td>{{ g['values'].typical_home_value | money }}</td>
+        <td>{{ g['values'].typical_home_value_change_1y_pct | signed_pct(2) }}</td>
+        <td>{{ g['values'].typical_home_value_change_5y_pct | signed_pct(2) }}</td>
+        {% if focus.level != 'national' %}
+        <td>{% if loop.first %}{{ '—' }}{% else %}{{ (100 * (fv.typical_home_value / g['values'].typical_home_value - 1)) | signed_pct }}{% endif %}</td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if focus.level == 'zip' and rank %}
+  <p>ZIP {{ focus.short }} ranks <strong>{{ rank.value_rank | num }} of {{ rank.zips_in_state | num }}</strong> {{ geos[1].name }} ZIP codes by home value
+  (higher than {{ rank.percentile_state | num }}% of them, and {{ rank.percentile_us | num }}% of ZIPs nationwide){% if rank.change_rank is not none %},
+  and {{ rank.change_rank | num }} of {{ rank.zips_with_change | num }} by 1-year price change (1 = fastest rising){% endif %}.</p>
+  {% elif focus.level == 'state' and rank %}
+  <p>{{ focus.name }} ranks <strong>{{ rank.value_rank }} of {{ rank.n }}</strong> states (including DC) by typical home value.</p>
+  {% endif %}
+  {% if focus.level != 'zip' %}
+  <table class="data">
+    <thead><tr><th>Price range</th><th>Lower-priced homes</th><th>Typical home</th><th>Higher-priced homes</th></tr></thead>
+    <tbody>
+    {% for g in geos %}
+      <tr><td><span class="swatch {{ g.level }}"></span>{{ g.name }}</td>
+        <td>{{ g['values'].bottom_tier_home_value | money }}</td>
+        <td>{{ g['values'].typical_home_value | money }}</td>
+        <td>{{ g['values'].top_tier_home_value | money }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">Lower-priced homes: 5th&ndash;35th percentile of home values; typical: 35th&ndash;65th; higher-priced: 65th&ndash;95th (Zillow tiers). Zillow does not publish tiers for ZIP codes.</div>
+  {% endif %}
+  <div class="chart-title">Typical home value, last 10 years</div>
+  <div class="chart">{{ chart_values | safe }}</div>
+</section>
+
+<section>
+  <h2><span class="num">2</span>Rents</h2>
+  <table class="data">
+    <thead><tr><th>Area</th><th>Typical rent (monthly)</th><th>1-year change</th><th>As of</th></tr></thead>
+    <tbody>
+    {% for g in geos %}
+      <tr><td><span class="swatch {{ g.level }}"></span>{{ g.name }}</td>
+      {% if g['values'].typical_rent is not none %}
+        <td>{{ g['values'].typical_rent | money }}</td>
+        <td>{{ g['values'].typical_rent_change_1y_pct | signed_pct(2) }}</td>
+        <td>{{ g['values'].rent_as_of | month }}</td>
+      {% elif g.level == 'state' and state_medians %}
+        <td>{{ state_medians.rent | money }}*</td><td>{{ '—' }}</td><td>{{ as_of | month }}</td>
+      {% else %}
+        <td>{{ '—' }}</td><td>{{ '—' }}</td><td>{{ '—' }}</td>
+      {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if state_geo %}<div class="note">* Zillow does not publish rents for states; this is the median across the {{ state_medians.zips_with_rent | num }} {{ state_geo.name }} ZIP codes with a rent index.</div>{% endif %}
+  {% if fv.typical_rent is none and focus.level == 'zip' %}<p>Zillow does not publish a rent index for this ZIP code.</p>{% endif %}
+  {% if chart_rents %}
+  <div class="chart-title">Typical monthly rent since 2015</div>
+  <div class="chart">{{ chart_rents | safe }}</div>
+  {% endif %}
+  <div class="note">Typical rent is the Zillow Observed Rent Index (ZORI): asking rents for single-family homes, condos, and apartments, 35th&ndash;65th percentile.</div>
+</section>
+
+<section>
+  <h2><span class="num">3</span>Mortgage rates (national)</h2>
+  <table class="data">
+    <thead><tr><th>Loan</th><th>Rate</th><th>1-week change</th><th>1-year change</th><th>52-week range</th><th>Over 10-yr Treasury</th><th>As of</th></tr></thead>
+    <tbody>
+    {% for r in rates %}
+      <tr><td>{{ r.rate_name }}</td><td>{{ r.rate_pct | rate }}</td>
+      <td>{{ r.change_1w_pct_pts | signed_pts }}</td><td>{{ r.change_1y_pct_pts | signed_pts }}</td>
+      <td>{{ r.low_52w_pct | rate }}&ndash;{{ r.high_52w_pct | rate }}</td>
+      <td>{{ r.spread_to_treasury_pct_pts | signed_pts }}</td><td>{{ r.rate_as_of | day }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">30- and 15-year fixed: Freddie Mac Primary Mortgage Market Survey (weekly). Other loans: Optimal Blue Mortgage Market Indices (daily). The spread is the rate minus the 10-year Treasury yield on the same day.</div>
+  <div class="chart-title">Freddie Mac average rates, last 5 years</div>
+  <div class="chart">{{ chart_rates | safe }}</div>
+</section>
+
+<section>
+  <h2><span class="num">4</span>Affordability</h2>
+  <table class="data">
+    <thead><tr><th>Area</th><th>Typical home</th><th>Monthly payment now</th><th>A year ago</th><th>Change</th><th>Price-to-rent</th></tr></thead>
+    <tbody>
+    {% for g in geos %}
+      {% set a = g['afford'] %}
+      <tr><td><span class="swatch {{ g.level }}"></span>{{ g.name }}</td>
+        <td>{{ a.get('typical_home_value') | money }}</td>
+        <td>{{ a.get('monthly_payment') | money }}</td>
+        <td>{{ a.get('monthly_payment_1y_ago') | money }}</td>
+        <td>{{ a.get('monthly_payment_change_1y_pct') | signed_pct }}</td>
+        <td>{% if a.get('price_to_rent_ratio') is not none %}{{ a.price_to_rent_ratio | num(1) }}{% elif g.level == 'state' and state_medians and state_medians.price_to_rent is not none %}{{ state_medians.price_to_rent | num(1) }}*{% else %}{{ '—' }}{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="callout">
+    Nationally, the payment on the typical home is <strong>{{ us_afford.monthly_payment | money }} a month</strong>,
+    or <strong>{{ us_afford.payment_to_income_pct | num(1) }}%</strong> of the {{ us_afford.income_year }} US median household income
+    ({{ us_afford.median_household_income | money }}). A common guideline treats housing costs above 30% of income as a burden.
+  </div>
+  <div class="note">
+    Monthly payment: principal and interest on the typical home with {{ down_payment_pct }}% down and a {{ loan_term_years }}-year fixed loan at the Freddie Mac rate
+    ({{ fa.get('mortgage_rate_30y_pct') | rate }} on {{ fa.get('rate_as_of') | day }}; a year earlier {{ fa.get('mortgage_rate_30y_1y_ago_pct') | rate }}, applied to that month's home value).
+    Property tax and insurance are not included yet. Price-to-rent: typical home value divided by a year of typical rent; higher means buying costs more relative to renting.
+    {% if state_geo %}* Median across {{ state_geo.name }} ZIP codes.{% endif %}
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">7</span>Outlook: Zillow's forecast</h2>
+  <table class="data">
+    <thead><tr><th>Area</th><th>Next month</th><th>Next quarter</th><th>Next 12 months</th><th>Implied value in 12 months</th></tr></thead>
+    <tbody>
+    {% for g in geos %}
+      {% set f = g['forecast'] %}
+      <tr><td><span class="swatch {{ g.level }}"></span>{{ g.name }}</td>
+      {% if f %}
+        <td>{{ f.forecast_1m_pct | signed_pct }}</td><td>{{ f.forecast_3m_pct | signed_pct }}</td>
+        <td>{{ f.forecast_12m_pct | signed_pct }}</td><td>{{ f.forecast_12m_home_value | money }}</td>
+      {% elif g.level == 'state' and state_medians and state_medians.forecast_12m is not none %}
+        <td>{{ '—' }}</td><td>{{ '—' }}</td><td>{{ state_medians.forecast_12m | signed_pct }}*</td><td>{{ '—' }}</td>
+      {% else %}
+        <td>{{ '—' }}</td><td>{{ '—' }}</td><td>{{ '—' }}</td><td>{{ '—' }}</td>
+      {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">
+    Zillow Home Value Forecast, published with the {{ as_of | month }} data: expected change in the typical home value.
+    {% if state_geo %}* Zillow does not forecast states; median of the {{ state_medians.zips_with_forecast | num }} {{ state_geo.name }} ZIP-code forecasts.{% endif %}
+    This is Zillow's forecast, not a projection made for this report.
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">5&ndash;6, 11</span>National market snapshot</h2>
+  <table class="data long">
+    <thead><tr><th>Indicator</th><th>Latest</th><th>Period</th><th>Change from a year earlier</th></tr></thead>
+    <tbody>
+    {% for p in panel %}
+      {% if loop.first or p.section_name != loop.previtem.section_name %}
+      <tr class="group"><td colspan="4">{{ p.section_name }}</td></tr>
+      {% endif %}
+      <tr><td>{{ p.metric_name }}</td><td>{{ p.display_value }}</td><td>{{ p.display_as_of }}</td>
+        <td>{% if p.change_type == 'pts' %}{{ p.change_1y | signed_pts }}{% else %}{{ p.change_1y | signed_pct }}{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">Listings: Realtor.com (not seasonally adjusted, so compared with the same month a year earlier). Existing home sales: National Association of Realtors. Construction and new home sales: U.S. Census Bureau and HUD, seasonally adjusted annual rates. Delinquency: Federal Reserve Board, commercial banks.</div>
+</section>
+
+<section class="about">
+  <h2>About this report</h2>
+  <ul>
+    <li><strong>Sources.</strong> Home values, rents, and forecasts: Zillow Research (Zillow Home Value Index, Zillow Observed Rent Index, Zillow Home Value Forecast). Mortgage rates, income, and national market data: FRED, Federal Reserve Bank of St. Louis, which republishes data from Freddie Mac, Optimal Blue, Realtor.com, the National Association of Realtors, the U.S. Census Bureau, HUD, and the Federal Reserve Board.</li>
+    <li><strong>Typical home value</strong> is the Zillow Home Value Index for all single-family homes and condos, 35th&ndash;65th percentile, smoothed and seasonally adjusted. Changes compare the same month one or five years earlier.</li>
+    <li><strong>Timing.</strong> Sources publish on different schedules, so each figure shows its own date. Income is annual and about a year behind.</li>
+    <li>This report describes public market data. It is not financial, investment, or real estate advice. It is an independent project, not affiliated with or endorsed by any data provider.</li>
+  </ul>
+</section>
+
+</td></tr></tbody>
+</table>
+</div>
+</body>
+</html>
