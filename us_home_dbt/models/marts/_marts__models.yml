@@ -389,3 +389,67 @@ models:
         description: Forecast percent change over 12 months.
       - name: forecast_12m_home_value
         description: The 12-month forecast in dollars.
+
+  - name: fct_national_market_indicators
+    description: >
+      National housing market indicators by date for report sections 5
+      (market activity: Realtor.com listings and days on market, NAR existing
+      home sales), 6 (new supply: the construction pipeline, new home sales,
+      months' supply), and 11 (market risk: mortgage delinquency), labeled
+      from the market_panel_series seed. Includes the derived share of active
+      listings with a price cut. Data from FRED, Federal Reserve Bank of St.
+      Louis; each series' original publisher is in the publisher column.
+    columns:
+      - name: series_id
+        description: FRED series ID, or PRICE_REDUCED_SHARE for the derived share.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('market_panel_series')
+                field: series_id
+      - name: observation_date
+        description: First day of the month or quarter observed (FRED convention).
+        data_tests:
+          - not_null
+      - name: value
+        description: Observed value, in the series' units.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - observation_date
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "value between 0 and 100"
+          config:
+            where: "series_id = 'PRICE_REDUCED_SHARE'"
+
+  - name: national_market_panel_current
+    description: >
+      Latest value of each national market indicator with its change from
+      the same month or quarter a year earlier (year over year, because the
+      Realtor.com counts are not seasonally adjusted). Percent change for
+      counts and levels, percentage-point difference for rates and shares
+      (see change_type). Data from FRED, Federal Reserve Bank of St. Louis.
+    columns:
+      - name: series_id
+        description: FRED series ID, or PRICE_REDUCED_SHARE.
+        data_tests:
+          - not_null
+          - unique
+      - name: as_of
+        description: Date of the latest observation (first day of the month or quarter).
+        data_tests:
+          - not_null
+      - name: value
+        description: Latest value, in the series' units.
+      - name: value_1y_ago
+        description: Value for the same month or quarter a year earlier.
+      - name: change_type
+        description: pct or pts, describing change_1y.
+      - name: change_1y
+        description: Percent change (pct) or percentage-point difference (pts) from a year earlier.

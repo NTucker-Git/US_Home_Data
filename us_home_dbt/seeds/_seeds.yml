@@ -74,3 +74,63 @@ seeds:
         data_tests:
           - not_null
           - unique
+
+  - name: market_panel_series
+    description: >
+      Labels for the national FRED series in the market panel (report
+      sections 5, 6, and 11). Titles, units, and seasonal adjustment were
+      taken from FRED's series metadata on 2026-11-18. change_type says
+      whether the 1-year change is a percent change (pct: counts and levels)
+      or a difference in percentage points (pts: rates and shares).
+      is_derived marks series calculated in this project rather than loaded.
+    config:
+      column_types:
+        report_section: integer
+        is_derived: boolean
+        display_order: integer
+    columns:
+      - name: series_id
+        description: FRED series ID, or a project-defined ID for derived series.
+        data_tests:
+          - not_null
+          - unique
+          # Every loaded (non-derived) series must exist in the FRED data
+          - relationships:
+              arguments:
+                to: ref('stg_fred__observations')
+                field: series_id
+              config:
+                where: "not is_derived"
+      - name: report_section
+        description: Report section number (5, 6, or 11).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [5, 6, 11]
+                quote: false
+      - name: section_name
+        description: Report section name.
+      - name: metric_name
+        description: Readable name used in the report.
+        data_tests:
+          - not_null
+      - name: units
+        description: Units of the value, from FRED.
+      - name: seasonal_adjustment
+        description: Seasonal adjustment, from FRED.
+      - name: publisher
+        description: Original publisher of the data (FRED redistributes it).
+      - name: change_type
+        description: pct (percent change) or pts (percentage-point difference).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['pct', 'pts']
+      - name: is_derived
+        description: True if calculated in this project from other series.
+        data_tests:
+          - not_null
+      - name: display_order
+        description: Sort order in the report.
+        data_tests:
+          - unique

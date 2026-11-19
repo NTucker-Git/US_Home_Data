@@ -1,0 +1,18 @@
+series_id,report_section,section_name,metric_name,units,seasonal_adjustment,publisher,change_type,is_derived,display_order
+ACTLISCOUUS,5,Market activity,Active listings,Listings,Not seasonally adjusted,Realtor.com,pct,false,1
+NEWLISCOUUS,5,Market activity,New listings,Listings,Not seasonally adjusted,Realtor.com,pct,false,2
+PENLISCOUUS,5,Market activity,Pending listings,Listings,Not seasonally adjusted,Realtor.com,pct,false,3
+PRIREDCOUUS,5,Market activity,Listings with a price cut,Listings,Not seasonally adjusted,Realtor.com,pct,false,4
+PRICE_REDUCED_SHARE,5,Market activity,Share of active listings with a price cut,Percent,Not seasonally adjusted,Derived from Realtor.com (PRIREDCOUUS / ACTLISCOUUS),pts,true,5
+MEDDAYONMARUS,5,Market activity,Median days on market,Days,Not seasonally adjusted,Realtor.com,pct,false,6
+EXHOSLUSM495S,5,Market activity,Existing home sales,"Homes, seasonally adjusted annual rate",Seasonally adjusted annual rate,National Association of Realtors,pct,false,7
+PERMIT,6,New supply and construction,Building permits,"Thousands of units, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,8
+PERMIT1,6,New supply and construction,"Building permits, single-family","Thousands of units, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,9
+AUTHNOTTSA,6,New supply and construction,Permitted but not started,Thousands of units,Seasonally adjusted,U.S. Census Bureau and HUD,pct,false,10
+HOUST,6,New supply and construction,Housing starts,"Thousands of units, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,11
+HOUST1F,6,New supply and construction,"Housing starts, single-family","Thousands of units, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,12
+UNDCONTSA,6,New supply and construction,Under construction,Thousands of units,Seasonally adjusted,U.S. Census Bureau and HUD,pct,false,13
+COMPUTSA,6,New supply and construction,Completions,"Thousands of units, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,14
+HSN1F,6,New supply and construction,New single-family homes sold,"Thousands, seasonally adjusted annual rate",Seasonally adjusted annual rate,U.S. Census Bureau and HUD,pct,false,15
+MSACSR,6,New supply and construction,Months' supply of new homes,Months,Seasonally adjusted,U.S. Census Bureau and HUD,pct,false,16
+DRSFRMACBS,11,Market risk,Single-family mortgage delinquency rate (commercial banks),Percent,Seasonally adjusted,Board of Governors of the Federal Reserve System,pts,false,17
