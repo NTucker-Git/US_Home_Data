@@ -48,9 +48,9 @@ The report is built in versions, starting with the sources already loaded (FRED 
 
 | Version | Contents |
 |---|---|
-| **v1** | Sections 1 (home prices), 2 (rents), 3 (mortgage rates), and 7 (outlook: Zillow's forecast), plus: **affordability**, the monthly payment on the typical home at today's 30-year rate and the price-to-rent ratio, at every level where the data exists, and payment as a share of median household income nationally; a **national market panel** for sections 5, 6, and 11 (listings, days on market, the construction pipeline, new home sales, months' supply, delinquency); and a **comparison** of each ZIP code with its state and the US, including its rank within the state |
+| **v1** | Sections 1 (home prices), 2 (rents), 3 (mortgage rates), and 7 (outlook: Zillow's forecast), plus: **affordability**, the monthly payment (principal and interest, 20% down) on the typical home at today's 30-year rate and the price-to-rent ratio, at every level where the data exists, and payment as a share of median household income nationally; a **national market panel** for sections 5, 6, and 11 (listings, days on market, the construction pipeline, new home sales, months' supply, delinquency); and a **comparison** of each ZIP code with its state and the US, including its rank within the state |
 | **v1.1** | This project's own home value projection next to Zillow's forecast, later scored against actual outcomes; inflation-adjusted home values |
-| **v2** | State-level FRED series (listings, house price index, unemployment); Census American Community Survey data by ZIP (income, housing stock, property taxes), completing affordability and sections 8 and 9; a reference table of every FRED series with its units, owner, and terms |
+| **v2** | State-level FRED series (listings, house price index, unemployment); Census American Community Survey data by ZIP (income, housing stock, property taxes), completing sections 8 and 9; the **full monthly payment** (v1's principal and interest plus property tax and homeowners insurance) and payment as a share of income by state and ZIP, completing affordability; a reference table of every FRED series with its units, owner, and terms |
 
 ## Build status
 
@@ -59,7 +59,8 @@ The report is built in versions, starting with the sources already loaded (FRED 
 | 1, 2. Home prices, rents | Zillow home values and rents loaded and modeled in dbt for the US, states, metros, and ZIP codes; first marts built. Price per square foot and HUD Fair Market Rents to come |
 | 3. Mortgage rates | Marts built: every rate by date, and the latest rates with 1-week and 1-year changes, 52-week range, and spread over the 10-year Treasury |
 | 7. Outlook | Zillow home value forecasts loaded (US, metro, ZIP) |
-| 4, 5, 6, 8, 11. Affordability, market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
+| 4. Affordability | Mart built for the US, states, metros, and ZIP codes: monthly principal-and-interest payment on the typical home (30-year fixed, 20% down) now and a year earlier, price-to-rent ratio, and national payment-to-income. Property tax, insurance, and local income come in v2 |
+| 5, 6, 8, 11. Market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
 | 9, 10. People and income, neighborhood | Planned (national income indicators loaded) |
 
 ## Attribution

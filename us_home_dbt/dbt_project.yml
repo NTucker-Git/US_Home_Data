@@ -43,3 +43,9 @@ models:
 seeds:
   us_home_dbt:
     +schema: seeds
+
+# Assumptions for the affordability marts. The v1 payment is principal and
+# interest only on a fixed-rate loan; property tax and insurance come in v2.
+vars:
+  affordability_down_payment_pct: 20
+  affordability_loan_term_years: 30

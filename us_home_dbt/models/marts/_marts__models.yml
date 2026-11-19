@@ -233,3 +233,84 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "rate_pct between low_52w_pct and high_52w_pct"
+
+  - name: affordability_current
+    description: >
+      Affordability of the typical home in each region (report section 4, v1).
+      The monthly payment is principal and interest only on a 30-year fixed
+      loan with 20% down (dbt vars affordability_down_payment_pct and
+      affordability_loan_term_years), at the latest Freddie Mac 30-year rate;
+      property tax and insurance are planned for v2. The payment a year
+      earlier uses the home value from the same month a year before and the
+      rate from the same date a year before. Data Provided by Zillow Group.
+      Data from FRED, Federal Reserve Bank of St. Louis.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+          - unique
+      - name: geography_level
+        description: national, state, metro, or zip.
+      - name: region_name
+        description: '"United States", a state name, a metro name, or a 5-digit ZIP code.'
+      - name: home_value_as_of
+        description: Month-end date of the home value used.
+      - name: typical_home_value
+        description: Zillow Home Value Index (mid tier), USD.
+      - name: rate_as_of
+        description: Date of the Freddie Mac 30-year rate used.
+      - name: mortgage_rate_30y_pct
+        description: Freddie Mac 30-year fixed rate, percent.
+      - name: down_payment_pct
+        description: Down payment assumed, percent of the home value.
+      - name: loan_term_years
+        description: Loan term assumed, years.
+      - name: loan_amount
+        description: typical_home_value minus the down payment, USD.
+      - name: monthly_payment
+        description: Monthly principal and interest, USD (no tax or insurance).
+        data_tests:
+          - not_null
+      - name: home_value_1y_ago
+        description: Typical home value in the same month a year earlier, USD.
+      - name: rate_1y_ago_as_of
+        description: Date of the 30-year rate used for the year-earlier payment.
+      - name: mortgage_rate_30y_1y_ago_pct
+        description: Freddie Mac 30-year rate a year earlier, percent.
+      - name: monthly_payment_1y_ago
+        description: Monthly principal and interest a year earlier, USD.
+      - name: monthly_payment_change_1y_pct
+        description: Percent change in the monthly payment over the year.
+      - name: rent_as_of
+        description: Month-end date of the latest rent.
+      - name: typical_rent
+        description: Zillow Observed Rent Index, USD per month.
+      - name: price_to_rent_ratio
+        description: >
+          typical_home_value divided by a year of typical_rent. Higher means
+          buying is expensive relative to renting. Only filled when value and
+          rent are from the same month.
+      - name: income_year
+        description: Year of the median household income (national row only).
+      - name: median_household_income
+        description: US median household income in current dollars (FRED MEHOINUSA646N), national row only.
+      - name: payment_to_income_pct
+        description: >
+          Annual principal and interest as a percent of median household
+          income (national row only). A common rule of thumb treats housing
+          costs above 30% of income as unaffordable.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "monthly_payment > 0 and loan_amount < typical_home_value"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "geography_level = 'national'"
+          config:
+            where: "payment_to_income_pct is not null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "price_to_rent_ratio > 0"
+          config:
+            where: "price_to_rent_ratio is not null"
