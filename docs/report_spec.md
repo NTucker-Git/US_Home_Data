@@ -63,6 +63,7 @@ The report is built in versions, starting with the sources already loaded (FRED 
 | 5, 6, 11. Market activity, new supply, market risk | National panel built: listings, share of listings with a price cut, days on market, existing and new home sales, the construction pipeline, months' supply, and delinquency, each with its 1-year change. State and ZIP sources next |
 | 8. Housing stock | National series loaded (FRED); Census data in v2 |
 | 9, 10. People and income, neighborhood | Planned (national income indicators loaded) |
+| ZIP comparison | Mart built: every ZIP next to its state and the US (home value, changes, payment, rent, price-to-rent, forecast), with its rank and percentile within the state. Where Zillow has no state figure (rent, forecast), the state comparison is the median across the state's ZIP codes |
 
 ## Attribution
 

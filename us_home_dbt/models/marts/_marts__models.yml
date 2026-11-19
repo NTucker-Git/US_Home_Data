@@ -453,3 +453,81 @@ models:
         description: pct or pts, describing change_1y.
       - name: change_1y
         description: Percent change (pct) or percentage-point difference (pts) from a year earlier.
+
+  - name: zip_comparison_current
+    description: >
+      "How does this ZIP compare?": each ZIP code with a home value, next to
+      its state and the US, with its rank and percentile within the state.
+      Home values, changes, and payments compare with Zillow's state and US
+      figures. Zillow publishes no state-level rents or forecasts, so those
+      compare with the median across the state's ZIP codes
+      (state_zip_median_* columns). Monthly payment is principal and interest
+      only (30-year fixed, 20% down). Data Provided by Zillow Group. Data from
+      FRED, Federal Reserve Bank of St. Louis.
+    columns:
+      - name: region_id
+        description: Zillow's region ID.
+        data_tests:
+          - not_null
+          - unique
+      - name: zip_code
+        description: 5-digit ZIP code.
+        data_tests:
+          - not_null
+          - unique
+      - name: state_code
+        description: Two-letter state abbreviation.
+        data_tests:
+          - not_null
+      - name: state_name
+        description: Full state name (from the states seed).
+      - name: state_fips
+        description: 2-digit state FIPS code (from the states seed).
+      - name: typical_home_value
+        description: ZIP's typical home value (ZHVI mid tier), USD.
+      - name: state_home_value
+        description: State's typical home value, USD.
+        data_tests:
+          - not_null
+      - name: us_home_value
+        description: US typical home value, USD.
+        data_tests:
+          - not_null
+      - name: home_value_vs_state_pct
+        description: Percent above (+) or below (-) the state's typical home value.
+      - name: home_value_vs_us_pct
+        description: Percent above (+) or below (-) the US typical home value.
+      - name: home_value_rank_in_state
+        description: Rank by home value within the state; 1 = highest.
+      - name: zips_in_state
+        description: Number of ZIPs in the state with a home value (the denominator for the rank).
+      - name: home_value_percentile_in_state
+        description: Percent of the state's ZIPs with a lower home value (0-100).
+      - name: home_value_percentile_in_us
+        description: Percent of all US ZIPs with a lower home value (0-100).
+      - name: home_value_change_1y_rank_in_state
+        description: Rank by 1-year home value change within the state; 1 = fastest rising. NULL if the ZIP has no 1-year change.
+      - name: zips_in_state_with_change_1y
+        description: Number of ZIPs in the state with a 1-year change (the denominator for that rank).
+      - name: monthly_payment
+        description: Monthly principal and interest on the ZIP's typical home, USD.
+      - name: state_zip_median_rent
+        description: Median typical rent across the state's ZIPs that have a rent (Zillow has no state-level rent).
+      - name: state_zip_median_price_to_rent_ratio
+        description: Median price-to-rent ratio across the state's ZIPs.
+      - name: state_zip_median_forecast_12m_pct
+        description: Median Zillow 12-month forecast across the state's ZIPs (Zillow has no state-level forecast).
+      - name: forecast_12m_pct
+        description: ZIP's Zillow 12-month home value forecast, percent.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "home_value_rank_in_state between 1 and zips_in_state"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "home_value_change_1y_rank_in_state between 1 and zips_in_state_with_change_1y"
+          config:
+            where: "home_value_change_1y_rank_in_state is not null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "home_value_percentile_in_state between 0 and 100 and home_value_percentile_in_us between 0 and 100"
