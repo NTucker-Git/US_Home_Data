@@ -1,0 +1,43 @@
+version: 2
+
+seeds:
+  - name: mortgage_rate_series
+    description: >
+      Labels for the FRED mortgage rate series used in report section 3: a
+      readable name, the original publisher, loan type, term, and how often the
+      series is published. display_order sets the order rates appear in the report.
+    config:
+      column_types:
+        term_years: integer
+        display_order: integer
+    columns:
+      - name: series_id
+        description: FRED series ID.
+        data_tests:
+          - not_null
+          - unique
+          # Every labeled series must actually be loaded from FRED
+          - relationships:
+              arguments:
+                to: ref('stg_fred__observations')
+                field: series_id
+      - name: rate_name
+        description: Readable name used in the report.
+        data_tests:
+          - not_null
+      - name: rate_source
+        description: Original publisher of the rate (FRED redistributes it).
+      - name: loan_type
+        description: conventional, conforming, jumbo, FHA, VA, or USDA.
+      - name: term_years
+        description: Loan term in years.
+      - name: frequency
+        description: weekly (Freddie Mac, Thursdays) or daily (Optimal Blue, business days).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['weekly', 'daily']
+      - name: display_order
+        description: Sort order in the report.
+        data_tests:
+          - unique

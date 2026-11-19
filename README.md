@@ -9,13 +9,18 @@ Work in progress. Two sources are loaded into DuckDB and exported to Parquet:
 - **FRED**: 44 national housing series (mortgage rates by loan type, home prices, listings, sales, the construction pipeline, rents, vacancy, affordability, and credit risk), extracted from the API.
 - **Zillow Research**: home values, rents, and one-year home value forecasts for the US, 51 states, about 900 metros, and about 28,000 ZIP codes (about 7.9 million rows).
 
-A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested staging views and the first marts: monthly and current home values and rents for every region, with 1- and 5-year changes. These feed report sections 1 (home prices) and 2 (rents). `dbt build` runs 5 models and 49 data tests.
+A dbt project ([us_home_dbt](us_home_dbt/)) turns the raw tables into tested staging views and marts:
+
+- Monthly and current home values and rents for every region, with 1- and 5-year changes (report sections 1 and 2).
+- Mortgage rates by loan type, with weekly and yearly changes, the 52-week range, and the spread over the 10-year Treasury (report section 3).
+
+`dbt build` runs 7 models, 1 seed, and 67 data tests.
 
 The report this pipeline will feed is defined in the [report specification](docs/report_spec.md).
 
 Next up:
 
-- Marts for mortgage rates and the home value outlook (report sections 3 and 7)
+- Marts for the home value outlook, affordability, a national market panel, and ZIP comparisons (the rest of report v1)
 - A first version of the "pick a ZIP, get a report" output
 - Schedule daily refreshes with Windows Task Scheduler
 
@@ -53,7 +58,8 @@ us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
     staging   stg_fred__observations, stg_zillow__monthly_values, stg_zillow__forecasts   (views)
         │
         v
-    marts     fct_home_values_rents_monthly, home_values_rents_current                     (tables)
+    marts     fct_home_values_rents_monthly, home_values_rents_current,                    (tables)
+              fct_mortgage_rates, mortgage_rates_current
 ```
 
 - **Raw data is saved untouched** with dated file or folder names, so any load can be rerun or audited against the original data.
@@ -63,6 +69,7 @@ us_home_data.duckdb  raw_fred, raw_zillow  (sources, tested)
 - **Missing values are handled explicitly.** FRED marks missing observations with `"."`, which the load converts to `NULL` with `TRY_CAST`; empty Zillow cells are dropped.
 - **Errors stop the run.** HTTP errors, missing inputs, unrecognized file names, and unexpected file layouts end the script with an error, so later steps never run on bad data.
 - **Every layer is tested.** dbt tests check the raw sources and each model: no missing keys, no duplicate keys (series and date, or dataset, region, and month), allowed values, 5-digit ZIP codes, and bottom-tier ≤ typical ≤ top-tier home values.
+- **Rates are matched to the right Treasury yield.** Weekly mortgage rates and daily Treasury yields aren't published on the same days, so an `ASOF JOIN` pairs each rate with the latest yield on or before its date, and a test checks the match is never more than a week old.
 - **Percent changes compare exact dates.** 1- and 5-year changes join each month to the same month 12 or 60 months earlier, so a gap in the data leaves the change empty instead of comparing the wrong months.
 - **Source terms are respected.** Zillow's Terms of Use prohibit automated access to its services, so Zillow files are downloaded by hand each month and only the load is scripted.
 

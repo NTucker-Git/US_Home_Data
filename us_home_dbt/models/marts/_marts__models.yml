@@ -124,3 +124,102 @@ models:
         description: Latest ZORI, USD per month.
       - name: typical_rent_change_1y_pct
         description: 1-year percent change in typical rent.
+
+  - name: fct_mortgage_rates
+    description: >
+      Mortgage rates by loan type and date (report section 3), from FRED:
+      Freddie Mac's weekly survey (conventional 30- and 15-year fixed) and
+      Optimal Blue's daily indexes (conforming, jumbo, FHA, VA, USDA). Each rate
+      carries the 10-year Treasury yield from the same date, or the latest
+      business day before it, and the spread between them. Data from FRED,
+      Federal Reserve Bank of St. Louis.
+    columns:
+      - name: series_id
+        description: FRED series ID (labels in the mortgage_rate_series seed).
+        data_tests:
+          - not_null
+      - name: rate_name
+        description: Readable rate name, e.g. "30-year fixed FHA".
+      - name: rate_source
+        description: Original publisher of the rate.
+      - name: loan_type
+        description: conventional, conforming, jumbo, FHA, VA, or USDA.
+      - name: term_years
+        description: Loan term in years.
+      - name: frequency
+        description: weekly or daily.
+      - name: display_order
+        description: Sort order in the report.
+      - name: rate_date
+        description: Observation date (Thursdays for the weekly series).
+        data_tests:
+          - not_null
+      - name: rate_pct
+        description: Average rate in percent (7.11 means 7.11%).
+        data_tests:
+          - not_null
+      - name: treasury_date
+        description: Date of the 10-year Treasury yield matched to this rate.
+      - name: treasury_10y_pct
+        description: 10-year Treasury constant maturity yield, percent (FRED DGS10).
+      - name: spread_to_treasury_pct_pts
+        description: rate_pct minus treasury_10y_pct, in percentage points.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - rate_date
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "rate_pct between 0 and 25"
+      # The matched Treasury yield must be recent, not a stale value from a data gap
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "rate_date - treasury_date <= 7"
+          config:
+            where: "treasury_date is not null"
+
+  - name: mortgage_rates_current
+    description: >
+      Latest value of each mortgage rate with its change over one week and one
+      year, its 52-week range, and its spread over the 10-year Treasury: the
+      headline numbers for report section 3. Changes compare with the latest
+      observation on or before the same date a week or a year earlier.
+      Data from FRED, Federal Reserve Bank of St. Louis.
+    columns:
+      - name: series_id
+        description: FRED series ID.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('mortgage_rate_series')
+                field: series_id
+      - name: rate_name
+        description: Readable rate name.
+      - name: rate_as_of
+        description: Date of the latest observation.
+        data_tests:
+          - not_null
+      - name: rate_pct
+        description: Latest rate, percent.
+        data_tests:
+          - not_null
+      - name: change_1w_pct_pts
+        description: Change from a week earlier, percentage points.
+      - name: change_1y_pct_pts
+        description: Change from a year earlier, percentage points.
+      - name: low_52w_pct
+        description: Lowest rate in the 52 weeks up to rate_as_of.
+      - name: high_52w_pct
+        description: Highest rate in the 52 weeks up to rate_as_of.
+      - name: treasury_10y_pct
+        description: 10-year Treasury yield matched to rate_as_of.
+      - name: spread_to_treasury_pct_pts
+        description: Latest rate minus the 10-year Treasury yield, percentage points.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "rate_pct between low_52w_pct and high_52w_pct"

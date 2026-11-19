@@ -57,7 +57,7 @@ The report is built in versions, starting with the sources already loaded (FRED 
 | Section | Status |
 |---|---|
 | 1, 2. Home prices, rents | Zillow home values and rents loaded and modeled in dbt for the US, states, metros, and ZIP codes; first marts built. Price per square foot and HUD Fair Market Rents to come |
-| 3. Mortgage rates | Data loaded (FRED) |
+| 3. Mortgage rates | Marts built: every rate by date, and the latest rates with 1-week and 1-year changes, 52-week range, and spread over the 10-year Treasury |
 | 7. Outlook | Zillow home value forecasts loaded (US, metro, ZIP) |
 | 4, 5, 6, 8, 11. Affordability, market activity, new supply, housing stock, market risk | National series loaded (FRED); state and ZIP sources next |
 | 9, 10. People and income, neighborhood | Planned (national income indicators loaded) |

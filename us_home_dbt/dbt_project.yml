@@ -37,3 +37,9 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+# Seeds are small CSV files in seeds/ that dbt loads as tables: hand-maintained
+# reference data such as labels, not source data. They go in the "seeds" schema.
+seeds:
+  us_home_dbt:
+    +schema: seeds

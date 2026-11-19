@@ -1,0 +1,9 @@
+series_id,rate_name,rate_source,loan_type,term_years,frequency,display_order
+MORTGAGE30US,30-year fixed,Freddie Mac Primary Mortgage Market Survey,conventional,30,weekly,1
+MORTGAGE15US,15-year fixed,Freddie Mac Primary Mortgage Market Survey,conventional,15,weekly,2
+OBMMIC30YF,30-year fixed conforming,Optimal Blue Mortgage Market Indices,conforming,30,daily,3
+OBMMIC15YF,15-year fixed conforming,Optimal Blue Mortgage Market Indices,conforming,15,daily,4
+OBMMIJUMBO30YF,30-year fixed jumbo,Optimal Blue Mortgage Market Indices,jumbo,30,daily,5
+OBMMIFHA30YF,30-year fixed FHA,Optimal Blue Mortgage Market Indices,FHA,30,daily,6
+OBMMIVA30YF,30-year fixed VA,Optimal Blue Mortgage Market Indices,VA,30,daily,7
+OBMMIUSDA30YF,30-year fixed USDA,Optimal Blue Mortgage Market Indices,USDA,30,daily,8
